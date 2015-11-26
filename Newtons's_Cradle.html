@@ -81,6 +81,8 @@
 	</script>
 
 	<script>
+		
+	
 		function start( )
 		{
 			var	canvas = document.getElementById("picasso");
@@ -161,7 +163,10 @@
 			stands[5] = new Cylinder([4*k,2*k,15], 0.2*k, 8*k, [0.7,0.7,0.7], [0,-90,0]);
 			
 			balls[0] = new Sphere([0,0,0], 0.5*k, [1,1,1]);
-			balls[1] = new Sphere([0,0,0], 0.5*k, [1,1,1]);
+			balls[1] = new Sphere([-4,0,5], 0.5*k, [1,1,1]);
+			for(var i=2; i<7; i++){
+				balls[i] = new Sphere([2*i-4.2*k,0,5], 0.5*k, [1,1,1]);
+			}
 		}
 
 		var frame = 0;
@@ -205,9 +210,10 @@
 			
 			if(action == 0){
 				if(direction[0] == 1){
-					if(angles[0] < -10){
+					if(angles[0] <= -10){
 						angles[0]+= (-angles[0]-5)/10;
 						balls[0].draw();
+						balls[1].draw();
 						balls[0].center[0] = 10*Math.cos(angles[0]/distance) + 5;
 						balls[0].center[2] = 10*Math.sin(angles[0]/distance) + 15;
 					} else {
@@ -217,6 +223,7 @@
 					if(angles[0] >= -30){
 						angles[0]-= -angles[0]/10;
 						balls[0].draw();
+						balls[1].draw();
 						balls[0].center[0] = 10*Math.cos(angles[0]/distance) + 5;
 						balls[0].center[2] = 10*Math.sin(angles[0]/distance) + 15;
 					} else {
@@ -229,6 +236,7 @@
 					if(angles[1] < 60){
 						angles[1]+= (angles[1]-30)/10;
 						balls[1].draw();
+						balls[0].draw();
 						balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
 						balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
 					} else {
@@ -239,6 +247,7 @@
 					if(angles[1] > 40){
 						angles[1]-= (angles[1]-35)/10;
 						balls[1].draw();
+						balls[0].draw();
 						balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
 						balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
 					} else {
@@ -247,8 +256,9 @@
 				}
 			}
 			
-			
-			
+			for(var i=2; i<7; i++){
+				balls[i].draw();
+			}
 			
 			// рисуване на n топки
 			for (var i=0; i<n; i++)
