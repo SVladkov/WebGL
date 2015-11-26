@@ -173,7 +173,7 @@
 			direction[0] = 1,
 			direction[1] = -1;
 			
-			angles[0] = 0,
+			angles[0] = -29,
 			angles[1] = 60;
 		
 			action = 0;
@@ -206,7 +206,7 @@
 			if(action == 0){
 				if(direction[0] == 1){
 					if(angles[0] < -10){
-						angles[0]+=2;
+						angles[0]+= (-angles[0]-5)/10;
 						balls[0].draw();
 						balls[0].center[0] = 10*Math.cos(angles[0]/distance) + 5;
 						balls[0].center[2] = 10*Math.sin(angles[0]/distance) + 15;
@@ -214,8 +214,8 @@
 						direction[0] = -1;
 					}
 				} else {
-					if(angles[0] > -30){
-						angles[0]-=2;
+					if(angles[0] >= -30){
+						angles[0]-= -angles[0]/10;
 						balls[0].draw();
 						balls[0].center[0] = 10*Math.cos(angles[0]/distance) + 5;
 						balls[0].center[2] = 10*Math.sin(angles[0]/distance) + 15;
@@ -227,7 +227,7 @@
 			} else {
 				if(direction[1] == 1){
 					if(angles[1] < 60){
-						angles[1]+=2;
+						angles[1]+= (angles[1]-30)/10;
 						balls[1].draw();
 						balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
 						balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
@@ -237,7 +237,7 @@
 					}
 				} else {
 					if(angles[1] > 40){
-						angles[1]-=2;
+						angles[1]-= (angles[1]-35)/10;
 						balls[1].draw();
 						balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
 						balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
