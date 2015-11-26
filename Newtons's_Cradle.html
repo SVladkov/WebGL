@@ -143,6 +143,7 @@
 			k = 2;
 			n = 4;
 			stands = [];
+			balls = [];
 			
 			legs[0] = new Leg([4,2,0],k);
 			legs[1] = new Leg([-4,2,0],k);
@@ -159,14 +160,21 @@
 			stands[4] = new Cylinder([4*k,-2*k,15], 0.2*k, 8*k, [0.7,0.7,0.7], [0,-90,0]);
 			stands[5] = new Cylinder([4*k,2*k,15], 0.2*k, 8*k, [0.7,0.7,0.7], [0,-90,0]);
 			
-			ball = new Sphere([0,0,0], 0.5*k, [1,1,1]);
+			balls[0] = new Sphere([0,0,0], 0.5*k, [1,1,1]);
+			balls[1] = new Sphere([0,0,0], 0.5*k, [1,1,1]);
 		}
 
 		var frame = 0;
 	
-		var balls = 8,
-			direction = 1,
-			angle = 0;
+		var numberOfBalls = 8,
+			direction = [],
+			angles = [];
+			
+			direction[0] = 1,
+			direction[1] = -1;
+			
+			angles[0] = 0,
+			angles[1] = 30;
 		
 		function drawFrame()
 		{
@@ -189,25 +197,47 @@
 				stands[i].draw();
 			}
 
-			console.log(angle + " " + direction + " " + time);
+			console.log(angles[0] + " " + direction + " " + time);
 			
-			if(direction == 1){
-				if(angle < 40){
-					angle+=1;
-					ball.draw();
-					ball.center[0] = 10*Math.cos((time/100000000*angle/180));
-					ball.center[2] = 10*Math.sin((time/100000000*angle/180)) + 15;
+			distance = 20;
+			
+			if(direction[0] == 1){
+				if(angles[0] < 0){
+					angles[0]++;
+					balls[0].draw();
+					balls[0].center[0] = 10*Math.cos((angles[0]/distance)) + 5;
+					balls[0].center[2] = 10*Math.sin((angles[0]/distance)) + 15;
 				} else {
-					direction = -1;
+					direction[0] = -1;
 				}
 			} else {
-				if(angle > 0){
-					ball.draw();
-					angle--;
-					ball.center[0] = 10*Math.cos((time/100000000*angle/180));
-					ball.center[2] = 10*Math.sin((time/100000000*angle/180)) + 15;
+				if(angles[0] > -30){
+					angles[0]--;
+					balls[0].draw();
+					balls[0].center[0] = 10*Math.cos((angles[0]/distance)) + 5;
+					balls[0].center[2] = 10*Math.sin((angles[0]/distance)) + 15;
 				} else {
-					direction = 1;
+					direction[0] = 1;
+				}
+			}
+			
+			if(direction[1] == 1){
+				if(angles[1] < 60){
+					angles[1]++;
+					balls[1].draw();
+					balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
+					balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
+				} else {
+					direction[1] = -1;
+				}
+			} else {
+				if(angles[1] > 30){
+					angles[1]--;
+					balls[1].draw();
+					balls[1].center[0] = 10*Math.sin((-angles[1]/distance)) - 5;
+					balls[1].center[2] = 10*Math.cos((-angles[1]/distance)) + 15;
+				} else {
+					direction[1] = 1;
 				}
 			}
 			
