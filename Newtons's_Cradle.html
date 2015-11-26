@@ -92,8 +92,8 @@
 		}
 		
 		Leg = function(position,k){
-			this.c = new Cylinder([position[0]*k,position[1]*k,position[2]], 0.5*k, k, [0.3,0,0], [0,0,0]);
-			this.s = new Sphere([position[0]*k,position[1]*k,position[2]], 0.5*k, [0.3,0,0]);
+			this.c = new Cylinder([position[0]*k,position[1]*k,position[2]-k], 0.5*k, k, [0.25,0,0], [0,0,0]);
+			this.s = new Sphere([position[0]*k,position[1]*k,position[2]], 0.5*k, [0.25,0,0]);
 		}
 
 		Leg.prototype.draw = function(){
@@ -140,14 +140,24 @@
 			// могат да бъдат създадени тук:
 			// ...
 			legs = [];
-			k = 1.5;
+			k = 2;
 			n = 4;
+			stands = [];
 			
 			legs[0] = new Leg([4,2,0],k);
 			legs[1] = new Leg([-4,2,0],k);
 			legs[2] = new Leg([-4,-2,0],k);
 			legs[3] = new Leg([4,-2,0],k);
 			
+			base = new Cuboid([0,0,-0.2*k], [8*k,4*k,0.5*k], [0.5,0.5,0.5]);
+
+			stands[0] = new Cylinder([4*k,2*k,0], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,0,0]);
+			stands[1] = new Cylinder([-4*k,2*k,0], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,0,0]);
+			stands[2] = new Cylinder([-4*k,-2*k,0], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,0,0]);
+			stands[3] = new Cylinder([4*k,-2*k,0], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,0,0]);
+			
+			stands[4] = new Cylinder([4*k,-2*k,15], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,-90,0]);
+			stands[5] = new Cylinder([4*k,2*k,15], 0.2*k, 7.5*k, [0.7,0.7,0.7], [0,-90,0]);
 		}
 
 		var frame = 0;
@@ -166,7 +176,12 @@
 			for(var i=0; i<n; i++){
 				legs[i].draw();
 			}
-			//legs[3].draw();
+			
+			base.draw();
+			
+			for(var i=0; i<6; i++){
+				stands[i].draw();
+			}
 			
 			// рисуване на n топки
 			for (var i=0; i<n; i++)
