@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+
+<head>
+	<meta charset="utf-8"/>
+	<title>4-сегментна ръка на робот</title>
+
+	<script src="webgl-fmi.js"></script>
+	<script src="shaders.js"></script>
+	
+	<script>
+		// става и кост - конструктор
+		Bone = function(length,body)
+		{	
+			this.length = length;
+			this.rot = [0,0,0,0];
+			this.body = body;
+		}
+
+
+		// става и кост - метод за рисуване
+		Bone.prototype.draw = function()
+		{	
+			if (this.rot)
+			{
+				if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
+				if (this.rot[1]) yRotate(this.rot[1]);	// вертикален ъгъл
+				if (this.rot[2]) xRotate(this.rot[2]);	// вертикален ъгъл
+				if (this.rot[3]) zRotate(this.rot[3]);	// осев ъгъл
+			}
+			if (this.offset) translate(this.offset); 
+			for (var i=0; i<this.body.length; i++)
+				this.body[i].draw();
+			translate([0,0,this.length]); // преместване в края на костта
+		}
+
+		function start( )
+		{
+			var	canvas = document.getElementById("picasso");
+			canvas.addEventListener('webglcontextlost',function(event){event.preventDefault();},false);
+			canvas.addEventListener('webglcontextrestored',function(){init();},false);
+
+			init();
+			drawFrame();
+		}
+		
+		function init()
+		{
+			gl = getContext("picasso");
+			glprog = getProgram(vShader,fShader);
+			getVariables();
+
+			gl.enable(gl.DEPTH_TEST);
+			gl.clearColor(0.7,0.6,0.2,1);
+
+			identity();
+			perspective(30,gl.canvas.width/gl.canvas.height,1,40000);
+			gl.uniform1i(uUseNormalMatrix,false);
+
+			gl.uniform3f(uAmbientColor,0.3,0.3,0.3);
+			gl.uniform3f(uDiffuseColor,1,1,1);
+			gl.uniform3f(uLightDir,0,0,-1);
+			
+			// дефиниране на сегментите
+			n = 5;
+			bone = [];
+/*			for (var i=0; i<n; i++)
+			{
+				var k = Math.pow(0.9,i); // коефициент на смаляване на размерите
+				bone[i] = new Bone( [4*k*k,1*k*k,9*k] );
+			}*/
+
+		
+			var grey = [0.7,0.7,0.7],
+				blue = [0,0,0.5];			
+		
+			platform = new Cylinder([0,0,0],4,0.5);
+			platform.color = grey;
+			
+			a = new Cylinder([0,0,0],0.7,5); a.color = grey;
+			bone[0] = new Bone(5,[a]);
+
+			var a = new Cuboid([0,0,-0.4],[1.7,1.7,1.7]); a.color = [0.5,0.4,0.4];
+			var b = new Cylinder([0,-1.7,0],1,3.4); b.rot=[0,90,0]; b.color = grey;
+			bone[1] = new Bone(0,[a,b]);
+
+			a = new Cylinder([0,1.75,0],1,0.5); a.rot=[0,90,0]; a.color = blue; 
+			b = new Cuboid([0,2,1.7],[2,0.5,3]); b.offset=[0,0,0]; b.color=blue;
+			var c = new Cylinder([0,1.75,3],1,0.5); c.rot=[0,90,0]; c.color = blue; 
+			var d = new Cylinder([0,-2.25,0],1,0.5); d.rot=[0,90,0]; d.color = blue; 
+			var e = new Cuboid([0,-2,1.7],[2,0.5,3]); e.offset=[0,0,0]; e.color = blue;
+			var f = new Cylinder([0,-2.25,3],1,0.5); f.rot=[0,90,0]; f.color = blue; 
+			bone[2] = new Bone(3,[a,b,c,d,e,f]);
+
+			a = new Cylinder([0,-1.8,0],1,3.6); a.rot=[0,90,0]; a.color = grey;
+			b = new Cylinder([0,0,0],0.7,1.5); b.color = grey;
+			var c = new Cylinder([0,0,1.5],0.7,0.3); c.color = [1,0,0];
+			var d = new Cylinder([0,0,1.8],0.7,1.8); d.color = [0,1,0];
+			var e = new Cylinder([0,0,3.6],0.7,0.3); e.color = [1,0,0];
+			var f = new Cylinder([0,0,3.9],0.7,0.4); f.color = grey;
+			var g = new Cylinder([0,0,4.3],0.7,0.3); g.color = [1,1,0];
+			var h = new Cylinder([0,0,4.6],0.7,0.8); h.color = [0,1,0];
+			bone[3] = new Bone(6,[a,b,c,d,e,f,g,h]);
+			
+			a = new Cylinder([0,-1.5,0],1,3); a.rot = [0,90,0]; a.color = grey;
+			b = new Cylinder([0,-2,0],1,0.5); b.rot = [0,90,0]; b.color = grey;
+			c = new Cuboid([0,-1.75,2],[2,0.5,4]); c.offset=[0,0,0]; c.color = grey;
+			d = new Cylinder([0,1.5,0],1,0.5); d.rot = [0,90,0]; d.color = grey;
+			e = new Cuboid([0,1.75,2],[2,0.5,4]); e.offset=[0,0,0]; e.color = grey;
+			f = new Cuboid([0,0,4],[2,0.5,4]); f.rot=[0,90,0]; f.color = grey;
+			bone[4] = new Bone(3.5,[a,b,c,d,e,f]);
+
+			// дефиниране на кост 3
+			a = new Spheroid([0,0,0],[2,0.5,0.1]); a.rot=[120,0,0]; a.color=[0.2,0.2,0.2];
+			b = new Spheroid([0,0,0],[2,0.5,0.1]); b.rot=[240,0,0]; b.color=[0.2,0.2,0.2];
+			var c = new Spheroid([0,0,0],[2,0.5,0.1]); c.rot=[360,0,0]; c.color=[0.2,0.2,0.2];
+			//bone[2] = new Bone(1,[a,b,c]);
+
+		
+		
+		
+		
+		
+		}
+
+		var frame = 0;
+		
+		var time = now();
+		var oldTime = time;
+		function now() { return (new Date()).getTime()/1000; }
+		
+		var dir = -1;	// направление, по което ще има промяна (0,1 или 2)
+		var bNo = -1;	// номер на кост, в чиято става има промяна (0 до n-1)
+		var aNo = -1;	// вектор с базовите ъгли (sin от тях дава реалните ъгли)
+		
+		var alpha = [0,0,0,0,0,0,0]; // базови ъгли
+		var range = [100,50,60,50,50,160,90]; // максимално отклонение на въртенето
+		
+		function drawFrame()
+		{
+			time = now();
+			var dTime = time-oldTime;
+			oldTime = time;
+			
+			frame++;
+			gl.clear(gl.COLOR_BUFFER_BIT+gl.DEPTH_BUFFER_BIT);
+			
+			lookAt([45*cos(time/5),45*sin(time/5),20],[0,0,8],[0,0,1]);
+
+			// рисуване на платформата
+			platform.draw();
+
+			// променяме един от ъглите в ставата
+			if (aNo>=0)
+			{
+				alpha[aNo] += dTime;
+				bone[bNo].rot[dir] = range[aNo]*sin(alpha[aNo]);
+			}
+
+			// рисуване на роботската ръка
+			pushMatrix();
+			for (var i=0; i<n; i++)
+				bone[i].draw();
+			popMatrix();
+
+			requestAnimationFrame(drawFrame);
+		}
+		
+		// активираме кост newBNo, ъгъл newDir и базов ъгъл newADir
+		// ако тази кост е вече активна, деактивираме я, без да активираме друга кост
+		function setDir(newBNo,newDir,newANo)
+		{
+			if (newANo!=aNo)
+			{
+				dir = newDir;
+				aNo = newANo;
+				bNo = newBNo;
+			}
+			else
+				aNo = -1;
+		}
+	</script>	
+</head>
+
+<body onload="start()">
+	<h2>4-сегментна ръка на робот</h2>
+
+	<noscript>
+		Искаме JavaScript, но няма!
+	</noscript>
+	
+	<canvas id="picasso" width="600" height="400" style="border: solid;">
+		Искаме canvas, но няма!
+	</canvas>
+	<br>
+	<button onclick="setDir(1,0,0)">Основа<br>въртене</button>
+	<!--<button onclick="setDir(0,1,1)">Основа<br>наклон</button>-->
+	<button onclick="setDir(2,1,1)">Първи<br>сегмент</button>
+	<button onclick="setDir(3,1,2)">Втори сегмент<br>наклон</button>
+	<button onclick="setDir(4,0,3)">Трети сегмент<br>въртене</button>
+	<button onclick="setDir(4,1,4)">Трети сегмент<br>наклон</button>
+	
+</body>
