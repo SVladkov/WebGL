@@ -1,10 +1,9 @@
-﻿// Библиотека WebGL-FMI v0.15.06
+﻿// Библиотека WebGL-FMI v0.14.01
 //
 // Работа с контексти и шейдъри
 //		getContext(id)
 //		getShader(id,type)
 //		getProgram(idv,idf)
-//		getVariables()
 //
 // Математически функции и константи
 //		random(a,b)
@@ -113,8 +112,7 @@ function getContext(id)
 // връща компилиран шейдър
 function getShader(id,type)
 {
-	var elem = document.getElementById(id);
-	var source = elem?elem.text:id;
+	var source = document.getElementById(id).text;
 	var shader = gl.createShader(type);
 
 	gl.shaderSource(shader,source);
@@ -151,24 +149,6 @@ function getProgram(idv,idf)
 	gl.useProgram(shaderProgram);
 	return shaderProgram;
 }
-
-
-// намира адресите на всички глобални и атрибутни променливи
-function getVariables()
-{
-	for (var i=0; i<gl.getProgramParameter(glprog,gl.ACTIVE_UNIFORMS); i++)
-	{
-		var name = gl.getActiveUniform(glprog,i).name;
-		window[name] = gl.getUniformLocation(glprog,name);
-	}
-
-	for (var i=0; i<gl.getProgramParameter(glprog,gl.ACTIVE_ATTRIBUTES); i++)
-	{
-		var name = gl.getActiveAttrib(glprog,i).name;
-		window[name] = gl.getAttribLocation(glprog,name);
-	}
-}
-
 
 
 // случайно дробно число в интервал
@@ -689,14 +669,12 @@ CanonicalCube.prototype.draw = function()
 var canonicalCube;
 
 // куб - конструктор с параметри център и размер
-Cube = function(center,size)
+Cube = function(center,size, color)
 {
 	// съхраняваме центъра и размера на куба
 	this.center = center;
 	this.size = size;
-	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.rot = undefined;
+	this.color = color;
 	// създаваме еднократно канонична инстанция
 	if (!canonicalCube)
 		canonicalCube = new CanonicalCube();
@@ -708,14 +686,7 @@ Cube.prototype.draw = function()
 	pushMatrix(); // запомняме матрицата
 	gl.vertexAttrib3fv(aColor,this.color); // подаваме цвета
 	translate(this.center); // мястото
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.size]); // и размера
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	canonicalCube.draw(); // самото рисуване
 	popMatrix(); // възстановяваме матрицата
@@ -724,14 +695,12 @@ Cube.prototype.draw = function()
 
 
 // кубоид - конструктор с параметри център и размер
-Cuboid = function(center,size)
+Cuboid = function(center,size, color)
 {
 	// съхраняваме центъра и размера на куба
 	this.center = center;
 	this.size = size;
-	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.rot = undefined;
+	this.color = color;
 	// създаваме еднократно канонична инстанция
 	if (!canonicalCube)
 		canonicalCube = new CanonicalCube();
@@ -743,14 +712,7 @@ Cuboid.prototype.draw = function()
 	pushMatrix(); // запомняме матрицата
 	gl.vertexAttrib3fv(aColor,this.color); // подаваме цвета
 	translate(this.center); // мястото
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale(this.size); // и размера
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	canonicalCube.draw(); // самото рисуване
 	popMatrix(); // възстановяваме матрицата
@@ -795,7 +757,7 @@ CanonicalPyramid = function(n)
 }
 
 // канонична пирамида - метод за рисуване
-CanonicalPyramid.prototype.draw = function(hollow)
+CanonicalPyramid.prototype.draw = function()
 {	
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 	// върхове
@@ -805,10 +767,7 @@ CanonicalPyramid.prototype.draw = function(hollow)
 	gl.enableVertexAttribArray(aNormal);
 	gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,6*FLOATS,3*FLOATS);
 	// рисуваме основата
-	if (!hollow)
-	{
-		gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
-	}
+	gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
 	// рисуваме околните стени
 	gl.drawArrays(gl.TRIANGLES,this.n+2,3*this.n);
 }
@@ -824,9 +783,6 @@ Pyramid = function(center,size,height,n)
 	this.height = height;
 	this.n = n;
 	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.hollow = false;
-	this.rot = undefined;
 	// създаваме еднократно канонична пирамида
 	if (!canonicalPyramid[n])
 		canonicalPyramid[n] = new CanonicalPyramid(n);
@@ -838,16 +794,9 @@ Pyramid.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.height]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
-	canonicalPyramid[this.n].draw(this.hollow);
+	canonicalPyramid[this.n].draw();
 	popMatrix();
 }
 
@@ -888,7 +837,7 @@ CanonicalCone = function(n)
 }
 
 // канонична пирамида - метод за рисуване
-CanonicalCone.prototype.draw = function(hollow)
+CanonicalCone.prototype.draw = function()
 {	
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 	// върхове
@@ -898,10 +847,7 @@ CanonicalCone.prototype.draw = function(hollow)
 	gl.enableVertexAttribArray(aNormal);
 	gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,6*FLOATS,3*FLOATS);
 	// рисуваме основата
-	if (!hollow)
-	{
-		gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
-	}
+	gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
 	// рисуваме околните стени
 	gl.drawArrays(gl.TRIANGLES,this.n+2,3*this.n);
 }
@@ -918,9 +864,6 @@ Cone = function(center,size,height)
 	this.height = height;
 	this.n = CONE_SIDES;
 	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.hollow = false;
-	this.rot = undefined;
 	// създаваме еднократно канонична пирамида
 	if (!canonicalCone[this.n])
 		canonicalCone[this.n] = new CanonicalCone(this.n);
@@ -932,16 +875,9 @@ Cone.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.height]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
-	canonicalCone[this.n].draw(this.hollow);
+	canonicalCone[this.n].draw();
 	popMatrix();
 }
 
@@ -994,7 +930,7 @@ CanonicalPrism = function(n)
 }
 
 // канонична призма - метод за рисуване
-CanonicalPrism.prototype.draw = function(hollow)
+CanonicalPrism.prototype.draw = function()
 {	
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 	// върхове
@@ -1004,11 +940,8 @@ CanonicalPrism.prototype.draw = function(hollow)
 	gl.enableVertexAttribArray(aNormal);
 	gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,6*FLOATS,3*FLOATS);
 	// рисуваме долната и горната основа
-	if (!hollow)
-	{
-		gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
-		gl.drawArrays(gl.TRIANGLE_FAN,this.n+2,this.n+2);
-	}
+	gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
+	gl.drawArrays(gl.TRIANGLE_FAN,this.n+2,this.n+2);
 	// рисуваме околните стени
 	gl.drawArrays(gl.TRIANGLES,2*this.n+4,6*this.n);
 }
@@ -1024,9 +957,6 @@ Prism = function(center,size,height,n)
 	this.height = height;
 	this.n = n;
 	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.hollow = false;
-	this.rot = undefined;
 	// създаваме еднократно канонична призма
 	if (!canonicalPrism[n])
 		canonicalPrism[n] = new CanonicalPrism(n);
@@ -1038,16 +968,9 @@ Prism.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.height]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
-	canonicalPrism[this.n].draw(this.hollow);
+	canonicalPrism[this.n].draw();
 	popMatrix();
 }
 
@@ -1101,7 +1024,7 @@ CanonicalCylinder = function(n)
 }
 
 // каноничен цилиндър - метод за рисуване
-CanonicalCylinder.prototype.draw = function(hollow)
+CanonicalCylinder.prototype.draw = function()
 {	
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 	// върхове
@@ -1111,11 +1034,8 @@ CanonicalCylinder.prototype.draw = function(hollow)
 	gl.enableVertexAttribArray(aNormal);
 	gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,6*FLOATS,3*FLOATS);
 	// рисуваме долната и горната основа
-	if (!hollow)
-	{
-		gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
-		gl.drawArrays(gl.TRIANGLE_FAN,this.n+2,this.n+2);
-	}
+	gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
+	gl.drawArrays(gl.TRIANGLE_FAN,this.n+2,this.n+2);
 	// рисуваме околните стени
 	gl.drawArrays(gl.TRIANGLES,2*this.n+4,6*this.n);
 }
@@ -1125,16 +1045,14 @@ var canonicalCylinder = [];
 
 // цилиндър - конструктор с параметри център, размер на основата, височина и брой стени
 var CYLINDER_SIDES = 32;
-Cylinder = function(center,size,height)
+Cylinder = function(center,size,height,color,orientation)
 {
 	this.center = center;
 	this.size = size;
 	this.height = height;
+	this.orientation = orientation;
 	this.n = CYLINDER_SIDES;
-	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.hollow = false;
-	this.rot = undefined;
+	this.color = color;
 	// създаваме еднократно канонична призма
 	if (!canonicalCylinder[this.n])
 		canonicalCylinder[this.n] = new CanonicalCylinder(this.n);
@@ -1146,16 +1064,13 @@ Cylinder.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
+	
+	xRotate(this.orientation[0]);
+	yRotate(this.orientation[1]);
+	zRotate(this.orientation[2]);
 	scale([this.size,this.size,this.height]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
-	canonicalCylinder[this.n].draw(this.hollow);
+	canonicalCylinder[this.n].draw();
 	popMatrix();
 }
 
@@ -1217,14 +1132,12 @@ var canonicalSphere = [];
 
 // сфера - конструктор с параметри център, радиус и n
 var SPHERE_SIDES = 32;
-Sphere = function(center,size)
+Sphere = function(center,size, color)
 {
 	this.center = center;
 	this.size = size;
 	this.n = SPHERE_SIDES;
-	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.rot = undefined;
+	this.color = color;
 	// създаваме еднократно канонична сфера
 	if (!canonicalSphere[this.n])
 		canonicalSphere[this.n] = new CanonicalSphere(this.n);
@@ -1236,14 +1149,7 @@ Sphere.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.size]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	canonicalSphere[this.n].draw();
 	popMatrix();
@@ -1256,8 +1162,6 @@ Spheroid = function(center,size)
 	this.size = size;
 	this.n = SPHERE_SIDES;
 	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.rot = undefined;
 	// създаваме еднократно канонична сфера
 	if (!canonicalSphere[this.n])
 		canonicalSphere[this.n] = new CanonicalSphere(this.n);
@@ -1269,14 +1173,7 @@ Spheroid.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale(this.size);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	
 	gl.uniform1i(uUseNormalMatrix,true);
@@ -1364,8 +1261,6 @@ Icosahedron = function(center,size)
 	this.center = center;
 	this.size = size;
 	this.color = [1,0.75,0];
-	this.offset = undefined;
-	this.rot = undefined;
 	// създаваме еднократно каноничен икосаедър
 	if (!canonicalIcosahedron)
 		canonicalIcosahedron = new CanonicalIcosahedron();
@@ -1377,14 +1272,7 @@ Icosahedron.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.size]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	canonicalIcosahedron.draw();
 	popMatrix();
@@ -1496,8 +1384,6 @@ GeodesicSphere = function(center,size)
 	this.size = size;
 	this.color = [1,0.75,0];
 	this.n = GEODESIC_SIDES;
-	this.offset = undefined;
-	this.rot = undefined;
 	// създаваме еднократно канонична геодезична сфера
 	if (!canonicalGeodesicSphere[this.n])
 		canonicalGeodesicSphere[this.n] = new CanonicalGeodesicSphere(this.n);
@@ -1509,14 +1395,7 @@ GeodesicSphere.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.size]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 	canonicalGeodesicSphere[this.n].draw();
 	popMatrix();
@@ -1583,8 +1462,6 @@ RotationalSolid = function(center,size,f)
 	this.center = center;
 	this.size = size;
 	this.color = [[1,0.5,1],[0.9,0.4,0.8]];
-	this.offset = undefined;
-	this.rot = undefined;
 }
 
 // ротационен обект - метод за рисуване
@@ -1593,14 +1470,7 @@ RotationalSolid.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale(this.size);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 
 	// заради мащаба ползваме матрица за нормалите
@@ -1690,8 +1560,6 @@ Torus = function(center,size,R,r)
 	this.center = center;
 	this.size = size;
 	this.color = [0.5,0.75,1];
-	this.offset = undefined;
-	this.rot = undefined;
 }
 
 // тор - метод за рисуване
@@ -1700,14 +1568,7 @@ Torus.prototype.draw = function()
 	pushMatrix();
 	gl.vertexAttrib3fv(aColor,this.color);
 	translate(this.center);
-	if (this.rot)
-	{
-		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
-		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
-		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
-	}
 	scale([this.size,this.size,this.size]);
-	if (this.offset) translate(this.offset); // и отместването
 	useMatrix();
 
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
