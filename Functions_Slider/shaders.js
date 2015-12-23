@@ -1,15 +1,24 @@
 ﻿var vShader =
+	'uniform mat4 uProjectionMatrix;'+
+	'uniform mat4 uViewMatrix;'+
+	'uniform mat4 uModelMatrix;'+
+	''+
 	'attribute vec3 aXYZ;'+
+	'attribute vec3 aColor;'+
+	'varying vec3 vColor;'+
 	''+
 	'void main ()'+
 	'{'+
-	'	gl_Position = vec4(aXYZ,1);'+
+	'	gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aXYZ,1);'+
+	'	gl_PointSize = 80.0;'+
+	'	vColor = aColor;'+
 	'}';
 	
 var fShader =
 	'precision mediump float;'+
+	'varying vec3 vColor;'+
 	''+
 	'void main( )'+
 	'{'+
-	'	gl_FragColor = vec4(1.0);'+
+	'	gl_FragColor = vec4(vColor,1.0);'+
 	'}';
