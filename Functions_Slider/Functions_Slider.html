@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+
+<!-- Ами това е началният код. Няма почти нищо в него, затова
+го напълнете с каквото счетете за подходящо. -->
+
+<head>
+	<meta charset="utf-8"/>
+	<title>Графиката</title>
+
+	<script src="webgl-fmi.js"></script>
+	<script src="shaders.js"></script>
+
+	<style>
+		canvas {
+			display: block;
+			position: fixed;
+			left: 2em;
+			top: 2em;
+			margin: auto;
+			width: calc(100% - 4em);
+			height: calc(100% - 4em);
+			box-shadow: 0px 0px 6em DarkBlue;
+		}
+		
+		#right_slider {
+			resize: both;
+			overflow: auto;
+			border: 1px solid black;
+			display: block;
+			font-weight: bold;
+			font-size: 2em;
+			//text-align: left;
+			position: absolute;
+			line-height: 1.5em;
+			white-space: nowrap;
+			overflow: hidden;
+			margin: auto;
+			bottom: 2em;
+			right: 30px;
+			width: 0px;
+			height: 50px;
+		}
+		
+		#right_handle {
+			border: 1px solid black;
+			display: block;
+			font-weight: bold;
+			font-size: 2em;
+			//text-align: left;
+			position: absolute;
+			line-height: 1.5em;
+			white-space: nowrap;
+			overflow: hidden;
+			margin: auto;
+			bottom: 2em;
+			right: 30px;
+			width: 20px;
+			height: 50px;
+			background-color: black;
+		}
+		
+		#left_slider {
+			resize: both;
+			overflow: auto;
+			border: 1px solid black;
+			display: block;
+			font-weight: bold;
+			font-size: 2em;
+			//text-align: left;
+			position: absolute;
+			line-height: 1.5em;
+			white-space: nowrap;
+			overflow: hidden;
+			margin: auto;
+			bottom: 2em;
+			left: 30px;
+			width: 0px;
+			height: 50px;
+		}
+		
+		#left_handle {
+			border: 1px solid black;
+			display: block;
+			font-weight: bold;
+			font-size: 2em;
+			//text-align: left;
+			position: absolute;
+			line-height: 1.5em;
+			white-space: nowrap;
+			overflow: hidden;
+			margin: auto;
+			bottom: 2em;
+			left: 30px;
+			width: 20px;
+			height: 50px;
+			background-color: black;
+		}
+	</style>
+
+	<script>
+		function start( )
+		{
+			gl = getContext("picasso");
+			glprog = getProgram(vShader,fShader);
+			getVariables();
+			drawFrame();
+		}
+		
+		function drawFrame()
+		{
+			gl.clearColor(0.5+sin(now()),0.5+sin(now()+2*PI/3),0.5+sin(now()+4*PI/3),1);
+			gl.clear(gl.COLOR_BUFFER_BIT+gl.DEPTH_BUFFER_BIT);
+			requestAnimationFrame(drawFrame);
+		}
+	</script>	
+</head>
+
+<body onload="start()" id="body">
+	<canvas id="picasso"></canvas>
+	<div id="left_handle"></div>
+	<div id="left_slider"></div>
+	<div id="right_handle"></div>
+	<div id="right_slider"></div>
+	
+	<script>
+		var dragging = [],
+			handle = [],
+			slider = [];
+		dragging[0] = false;
+		dragging[1] = false;
+		
+		handle[0] = document.getElementById('left_handle');
+		slider[0] = document.getElementById('left_slider');
+		handle[1] = document.getElementById('right_handle');
+		slider[1] = document.getElementById('right_slider');
+		
+		handle[0].style.marginLeft = "0px";
+		handle[1].style.marginRight = "0px";
+				
+		handle[0].addEventListener('mousedown', function(e){
+			dragging[0] = true;
+			handle[0].startX = e.clientX;
+			handle[0].left = parseInt(handle[0].style.marginLeft.replace(/px/,""));
+		});
+				
+		handle[1].addEventListener('mousedown', function(e){
+			dragging[1] = true;
+			handle[1].startX = e.clientX;
+			handle[1].right = parseInt(handle[1].style.marginRight.replace(/px/,""));
+		});
+		
+		body = document.getElementById("body");
+		body.addEventListener('mousemove', function(e){
+			if(dragging[0]){
+				var distance = handle[0].startX - e.clientX;
+				handle[0].style.marginLeft = handle[0].left - distance + "px";
+				slider[0].style.width = handle[0].style.marginLeft;
+			} else if(dragging[1]){
+				var distance = handle[1].startX - e.clientX;
+				handle[1].style.marginRight = handle[1].right + distance + "px";
+				slider[1].style.width = handle[1].style.marginRight;
+			}
+		});
+		
+		body.addEventListener('mouseup', function(){
+			dragging[0] = false;
+			dragging[1] = false;
+		});
+		
+		/*var dragging = [],
+			handle = [],
+			slider = [];
+		dragging[1] = false;
+		
+		handle[1] = document.getElementById('right_handle');
+		slider[1] = document.getElementById('right_slider');
+		
+		handle[1].addEventListener('mousedown', function(e){
+			dragging[1] = true;
+			handle[1].startX = e.clientX;
+			handle[1].right = parseInt(handle[1].style.marginRight.replace(/px/,""));
+		});
+		
+		handle[1].style.marginRight = "0px";
+		
+		body = document.getElementById("body");
+		body.addEventListener('mousemove', function(e){
+			if(dragging[1]){
+				var distance = handle[1].startX - e.clientX;
+				handle[1].style.marginRight = handle[1].right + distance + "px";
+				slider[1].style.width = handle[1].style.marginRight;
+			}
+		});
+		
+		body.addEventListener('mouseup', function(){
+			dragging[1] = false;
+		});*/
+		
+	</script>
+</body>
