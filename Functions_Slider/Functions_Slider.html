@@ -55,26 +55,49 @@
 			width: 20px;
 			background-color: black;
 		}
+		
+		#left_indicator {
+			position: fixed;
+			margin: auto;
+			bottom: 10px;
+		}
+		
+		#right_indicator {
+			position: fixed;
+			margin: auto;
+			bottom: 10px;
+			right: 10px;
+		}
 	</style>
 	
 	<script>
 		// облак от точки
-		var data = [];
-		
+		var data = [],
+			compressed = [],
+			ratio = 0;
+			
 		Cloud = function(maxN)
 		{	
 			
-			for (var i=0; i<maxN; i++)
+			for (var i=0; i<maxN; i++) {
 				data.push(0,0,0);
+				compressed.push(0,0,0);
+			}
 
 			var buf = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,buf);
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.DYNAMIC_DRAW);
 			
+			/*var cBuf = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER,cBuf);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(compressed), gl.DYNAMIC_DRAW);*/
+			
 			this.color = [0,0,0];
 			this.maxN = maxN;
 			this.buf = buf;
+			//this.cBuf = cBuf;
 			this.n = 0;
+			this.length = 0;
 		}
 
 		// облак - метод за рисуване
@@ -82,16 +105,19 @@
 		{	
 			pushMatrix();
 			gl.vertexAttrib3fv(aColor,this.color);
+			
+			//scale([1/ratio, 1/ratio, 1/ratio]);
+			scale([1/112, 1/100, 1/100]);
+			
 			useMatrix();
 
 			gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 			// върхове
 			gl.enableVertexAttribArray(aXYZ);
 			gl.vertexAttribPointer(aXYZ,3,gl.FLOAT,false,3*FLOATS,0*FLOATS);
-
+			
 			// рисуваме n точки
 			gl.drawArrays(gl.LINE_STRIP,0,this.n);
-
 			popMatrix();
 		}
 
@@ -111,6 +137,13 @@
 			canvas.addEventListener('webglcontextlost',function(event){event.preventDefault();},false);
 			canvas.addEventListener('webglcontextrestored',init,false);
 			
+			var left_limit = 5000,
+				right_limit = 50000,
+				range = right_limit - left_limit;
+			
+			ratio = range / canvas.width;
+			ratio = Math.floor(ratio);
+			
 			// прехващане на мишката само над графичното поле
 			/*canvas.addEventListener('mousemove',mouseMove,false);
 			canvas.addEventListener('mousedown',mouseDown,false);
@@ -122,7 +155,7 @@
 		}
 		
 		function init()
-		{
+		{		
 			gl = getContext("picasso");
 			glprog = getProgram(vShader,fShader);
 			getVariables();
@@ -134,10 +167,11 @@
 			var proj=orthoMatrix(gl.canvas.width,gl.canvas.height,-1000,1000);
 			gl.uniformMatrix4fv(uProjectionMatrix,false,proj);
 
-			cloud = new Cloud(10000);
+			cloud = new Cloud(45000);
 						
-			for(var i=-50; i<50; i+=0.1){
-				cloud.point(30*i, 100*Math.sin(i) + 40*Math.sin(2*i) + 60*Math.sin(0.5*i) + 20*Math.sin(3*i),0);
+			for(var i=-2250; i<2250; i+=0.1){
+				cloud.point(30*i, 100*Math.sin(i) + 4000*Math.sin(i/100) + 5000*Math.sin(i/300) + 20*Math.sin(3*i) + 10*Math.sin(20*i),0);
+				//cloud.point(10*i, 100*Math.sin(i),0);
 			}
 		}
 
@@ -232,10 +266,14 @@
 	<div id="right_handle"></div>
 	<div id="right_slider"></div>
 	
+	<div id="left_indicator">0</div>
+	<div id="right_indicator"></div>
+	
 	<script>
 		var dragging = [],
 			handle = [],
-			slider = [];
+			slider = [],
+			indicator = [];
 		dragging[0] = false;
 		dragging[1] = false;
 		
@@ -243,6 +281,8 @@
 		slider[0] = document.getElementById('left_slider');
 		handle[1] = document.getElementById('right_handle');
 		slider[1] = document.getElementById('right_slider');
+		indicator[0] = document.getElementById('left_indicator');
+		indicator[1] = document.getElementById('right_indicator');
 		
 		handle[0].style.marginLeft = "0px";
 		handle[1].style.marginRight = "0px";
@@ -265,10 +305,14 @@
 				var distance = handle[0].startX - e.clientX;
 				handle[0].style.marginLeft = handle[0].left - distance + "px";
 				slider[0].style.width = handle[0].style.marginLeft;
+				left_limit = parseInt(handle[0].style.marginLeft.replace(/px/,""));
+				indicator[0].innerHTML = left_limit * ratio;
 			} else if(dragging[1]){
 				var distance = handle[1].startX - e.clientX;
 				handle[1].style.marginRight = handle[1].right + distance + "px";
 				slider[1].style.width = handle[1].style.marginRight;
+				right_limit = parseInt(handle[1].style.marginRight.replace(/px/,""));
+				indicator[1].innerHTML = right_limit * ratio;
 			}
 		});
 		
