@@ -101,11 +101,12 @@
 		}
 
 		// облак - метод за рисуване
-		Cloud.prototype.draw = function()
+		Cloud.prototype.draw = function(left, right)
 		{	
 			pushMatrix();
 			gl.vertexAttrib3fv(aColor,this.color);
 			
+			//ratio *= 3;
 			//scale([1/ratio, 1/ratio, 1/ratio]);
 			scale([1/112, 1/100, 1/100]);
 			
@@ -117,7 +118,9 @@
 			gl.vertexAttribPointer(aXYZ,3,gl.FLOAT,false,3*FLOATS,0*FLOATS);
 			
 			// рисуваме n точки
-			gl.drawArrays(gl.LINE_STRIP,0,this.n);
+			//gl.drawArrays(gl.LINE_STRIP,0,this.n);
+			gl.drawArrays(gl.LINE_STRIP,left_limit * ratio, (initial_right_limit - right_limit * ratio) - left_limit * ratio);
+			console.log("left: " + left_limit*ratio + " right: " + (initial_right_limit - right_limit * ratio));
 			popMatrix();
 		}
 
@@ -131,15 +134,18 @@
 			this.n++;
 		}
 		
+		var initial_left_limit = 0,
+			initial_right_limit = 30000,
+			left_limit = initial_left_limit,
+			right_limit = initial_right_limit;
+		
 		function start( )
 		{
 			var	canvas = document.getElementById("picasso");
 			canvas.addEventListener('webglcontextlost',function(event){event.preventDefault();},false);
 			canvas.addEventListener('webglcontextrestored',init,false);
 			
-			var left_limit = 5000,
-				right_limit = 50000,
-				range = right_limit - left_limit;
+			var range = right_limit - left_limit;
 			
 			ratio = range / canvas.width;
 			ratio = Math.floor(ratio);
@@ -167,10 +173,10 @@
 			var proj=orthoMatrix(gl.canvas.width,gl.canvas.height,-1000,1000);
 			gl.uniformMatrix4fv(uProjectionMatrix,false,proj);
 
-			cloud = new Cloud(45000);
+			cloud = new Cloud(30000);
 						
-			for(var i=-2250; i<2250; i+=0.1){
-				cloud.point(30*i, 100*Math.sin(i) + 4000*Math.sin(i/100) + 5000*Math.sin(i/300) + 20*Math.sin(3*i) + 10*Math.sin(20*i),0);
+			for(var i=-1500; i<1500; i+=0.1){
+				cloud.point(30*i, 100*Math.sin(i) + 4000*Math.sin(i/100) + 5000*Math.sin(i/300) + 20*Math.sin(3*i) + 4000*Math.sin(i/200),0);
 				//cloud.point(10*i, 100*Math.sin(i),0);
 			}
 		}
@@ -189,64 +195,11 @@
 
 			lookAt([0,0,500],[0,0,0],[0,1,0]);
 
-			cloud.draw();
+			//cloud.draw(left_limit, right_limit);
+			cloud.draw(0, 33000);
 			
 //			requestAnimationFrame(drawFrame);
 		}
-		
-		// намиране на координатите на мишката при всяко
-		// уловено движение (над графичното поле)
-		/*var oldX,oldY;
-		var draw = false;
-		function mouseMove(event)
-		{
-			if (event.which!=1) return; // пропускаме само ляв бутон
-
-			// координати спрямо горния ляв връх
-			var x = event.clientX-gl.canvas.offsetLeft;
-			var y = event.clientY-gl.canvas.offsetTop;
-			
-			// координати спрямо центъра
-			x = +(x-gl.canvas.offsetWidth/2);
-			y = -(y-gl.canvas.offsetHeight/2);
-			
-			if (draw)
-			{
-				//cloud.point(oldX,oldY,0);
-				//cloud.point(x,y,0);
-			}
-			oldX = x;
-			oldY = y;
-			requestAnimationFrame(drawFrame);
-		}
-		
-		// при натискане на ляв бутон запомняме координатите
-		// и включваме на режим рисуване (draw=true)
-		function mouseDown(event)
-		{
-			if (event.which!=1) return; // пропускаме само ляв бутон
-			
-			// координати спрямо горния ляв връх
-			var x = event.clientX-gl.canvas.offsetLeft;
-			var y = event.clientY-gl.canvas.offsetTop;
-			
-			// координати спрямо центъра
-			x = +(x-gl.canvas.offsetWidth/2);
-			y = -(y-gl.canvas.offsetHeight/2);
-
-			oldX = x;
-			oldY = y;
-			
-			draw = true;
-		}
-		
-		// при пускане на ляв бутон излизаме от режим рисуване
-		function mouseUp(event)
-		{
-			if (event.which!=1) return; // пропускаме само ляв бутон
-
-			draw = false;
-		}*/
 	</script>
 </head>
 
@@ -306,19 +259,21 @@
 				handle[0].style.marginLeft = handle[0].left - distance + "px";
 				slider[0].style.width = handle[0].style.marginLeft;
 				left_limit = parseInt(handle[0].style.marginLeft.replace(/px/,""));
-				indicator[0].innerHTML = left_limit * ratio;
+				indicator[0].innerHTML = initial_left_limit + left_limit * ratio;
 			} else if(dragging[1]){
 				var distance = handle[1].startX - e.clientX;
 				handle[1].style.marginRight = handle[1].right + distance + "px";
 				slider[1].style.width = handle[1].style.marginRight;
 				right_limit = parseInt(handle[1].style.marginRight.replace(/px/,""));
-				indicator[1].innerHTML = right_limit * ratio;
+				indicator[1].innerHTML = initial_right_limit - right_limit * ratio;
 			}
 		});
 		
 		body.addEventListener('mouseup', function(){
 			dragging[0] = false;
 			dragging[1] = false;
+			
+			cloud.draw(left_limit, right_limit);
 		});
 	</script>
 </body>
