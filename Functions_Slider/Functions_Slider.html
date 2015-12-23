@@ -22,77 +22,39 @@
 			box-shadow: 0px 0px 6em DarkBlue;
 		}
 		
-		#right_slider {
-			resize: both;
-			overflow: auto;
+		#right_slider, #right_handle, #left_slider, #left_handle {
 			border: 1px solid black;
 			display: block;
 			font-weight: bold;
 			font-size: 2em;
-			//text-align: left;
 			position: absolute;
 			line-height: 1.5em;
 			white-space: nowrap;
 			overflow: hidden;
 			margin: auto;
-			bottom: 2em;
-			right: 30px;
+			bottom: 1em;
+			height: 100px;
+		}
+		
+		#right_slider {
+			right: 1em;
 			width: 0px;
-			height: 50px;
 		}
 		
 		#right_handle {
-			border: 1px solid black;
-			display: block;
-			font-weight: bold;
-			font-size: 2em;
-			//text-align: left;
-			position: absolute;
-			line-height: 1.5em;
-			white-space: nowrap;
-			overflow: hidden;
-			margin: auto;
-			bottom: 2em;
-			right: 30px;
+			right: 1em;
 			width: 20px;
-			height: 50px;
 			background-color: black;
 		}
 		
 		#left_slider {
-			resize: both;
-			overflow: auto;
-			border: 1px solid black;
-			display: block;
-			font-weight: bold;
-			font-size: 2em;
-			//text-align: left;
-			position: absolute;
-			line-height: 1.5em;
-			white-space: nowrap;
-			overflow: hidden;
-			margin: auto;
-			bottom: 2em;
-			left: 30px;
+			left: 1em;
 			width: 0px;
-			height: 50px;
 		}
 		
 		#left_handle {
-			border: 1px solid black;
-			display: block;
-			font-weight: bold;
-			font-size: 2em;
-			//text-align: left;
-			position: absolute;
-			line-height: 1.5em;
-			white-space: nowrap;
-			overflow: hidden;
-			margin: auto;
-			bottom: 2em;
-			left: 30px;
+			left: 1em;
 			width: 20px;
-			height: 50px;
 			background-color: black;
 		}
 	</style>
@@ -166,35 +128,5 @@
 			dragging[0] = false;
 			dragging[1] = false;
 		});
-		
-		/*var dragging = [],
-			handle = [],
-			slider = [];
-		dragging[1] = false;
-		
-		handle[1] = document.getElementById('right_handle');
-		slider[1] = document.getElementById('right_slider');
-		
-		handle[1].addEventListener('mousedown', function(e){
-			dragging[1] = true;
-			handle[1].startX = e.clientX;
-			handle[1].right = parseInt(handle[1].style.marginRight.replace(/px/,""));
-		});
-		
-		handle[1].style.marginRight = "0px";
-		
-		body = document.getElementById("body");
-		body.addEventListener('mousemove', function(e){
-			if(dragging[1]){
-				var distance = handle[1].startX - e.clientX;
-				handle[1].style.marginRight = handle[1].right + distance + "px";
-				slider[1].style.width = handle[1].style.marginRight;
-			}
-		});
-		
-		body.addEventListener('mouseup', function(){
-			dragging[1] = false;
-		});*/
-		
 	</script>
 </body>
