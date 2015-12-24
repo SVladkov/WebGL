@@ -16,7 +16,7 @@
 			top: 2em;
 			margin: auto;
 			width: calc(100% - 4em);
-			height: calc(100% - 4em);
+			height: calc(100% - 4em);			
 			box-shadow: 0px 0px 6em DarkBlue;
 		}
 		
@@ -68,34 +68,52 @@
 			bottom: 10px;
 			right: 10px;
 		}
+		
+		#pos {
+			position: fixed;
+			margin: auto;
+			bottom: 10px;
+			left: 200px;
+		}
 	</style>
 	
 	<script>
 		// облак от точки
+		var initial_left_limit = 0,
+			initial_right_limit = 30000,
+			range,
+			left_limit = initial_left_limit,
+			right_limit = initial_right_limit;
+		
+		
 		var data = [],
-			compressed = [],
 			ratio = 0;
+			
+		function leftPositionFunc() {
+			return initial_left_limit + left_limit * ratio;
+		}
+			
+		function rightPositionFunc() {
+			return initial_right_limit - right_limit * ratio;
+		}
+			
+		function rangeFunc() {
+			return rightPositionFunc() - leftPositionFunc();
+		}
 			
 		Cloud = function(maxN)
 		{	
-			
 			for (var i=0; i<maxN; i++) {
 				data.push(0,0,0);
-				compressed.push(0,0,0);
 			}
 
 			var buf = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,buf);
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.DYNAMIC_DRAW);
 			
-			/*var cBuf = gl.createBuffer();
-			gl.bindBuffer(gl.ARRAY_BUFFER,cBuf);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(compressed), gl.DYNAMIC_DRAW);*/
-			
 			this.color = [0,0,0];
 			this.maxN = maxN;
 			this.buf = buf;
-			//this.cBuf = cBuf;
 			this.n = 0;
 			this.length = 0;
 		}
@@ -106,9 +124,9 @@
 			pushMatrix();
 			gl.vertexAttrib3fv(aColor,this.color);
 			
-			//ratio *= 3;
 			//scale([1/ratio, 1/ratio, 1/ratio]);
-			scale([1/112, 1/100, 1/100]);
+			scale([1/(3*ratio), 1/(3*ratio), 1/(3*ratio)]);
+			console.log(3*ratio + " " + ratio);
 			
 			useMatrix();
 
@@ -118,9 +136,8 @@
 			gl.vertexAttribPointer(aXYZ,3,gl.FLOAT,false,3*FLOATS,0*FLOATS);
 			
 			// рисуваме n точки
-			//gl.drawArrays(gl.LINE_STRIP,0,this.n);
-			gl.drawArrays(gl.LINE_STRIP,left_limit * ratio, (initial_right_limit - right_limit * ratio) - left_limit * ratio);
-			console.log("left: " + left_limit*ratio + " right: " + (initial_right_limit - right_limit * ratio));
+			gl.drawArrays(gl.LINE_STRIP, leftPositionFunc(), rangeFunc());
+			
 			popMatrix();
 		}
 
@@ -134,28 +151,18 @@
 			this.n++;
 		}
 		
-		var initial_left_limit = 0,
-			initial_right_limit = 30000,
-			left_limit = initial_left_limit,
-			right_limit = initial_right_limit;
-		
 		function start( )
 		{
 			var	canvas = document.getElementById("picasso");
 			canvas.addEventListener('webglcontextlost',function(event){event.preventDefault();},false);
 			canvas.addEventListener('webglcontextrestored',init,false);
 			
-			var range = right_limit - left_limit;
+			range = initial_right_limit - initial_left_limit;
 			
-			ratio = range / canvas.width;
+			ratio = range / canvas.scrollWidth;			
 			ratio = Math.floor(ratio);
-			
-			// прехващане на мишката само над графичното поле
-			/*canvas.addEventListener('mousemove',mouseMove,false);
-			canvas.addEventListener('mousedown',mouseDown,false);
-			canvas.addEventListener('mouseup',mouseUp,false);
-			canvas.addEventListener('contextmenu',function(){return false;},false);*/
-
+			console.log("ratio: " + ratio + " range: " + range + " canvas.scrollWidth " + canvas.scrollWidth);
+		
 			init();
 			drawFrame();
 		}
@@ -173,11 +180,10 @@
 			var proj=orthoMatrix(gl.canvas.width,gl.canvas.height,-1000,1000);
 			gl.uniformMatrix4fv(uProjectionMatrix,false,proj);
 
-			cloud = new Cloud(30000);
+			cloud = new Cloud(range);
 						
-			for(var i=-1500; i<1500; i+=0.1){
+			for(var i=-range/20; i<range/20; i+=0.1){
 				cloud.point(30*i, 100*Math.sin(i) + 4000*Math.sin(i/100) + 5000*Math.sin(i/300) + 20*Math.sin(3*i) + 4000*Math.sin(i/200),0);
-				//cloud.point(10*i, 100*Math.sin(i),0);
 			}
 		}
 
@@ -195,9 +201,8 @@
 
 			lookAt([0,0,500],[0,0,0],[0,1,0]);
 
-			//cloud.draw(left_limit, right_limit);
-			cloud.draw(0, 33000);
-			
+			cloud.draw(left_limit, right_limit);
+						
 //			requestAnimationFrame(drawFrame);
 		}
 	</script>
@@ -220,7 +225,9 @@
 	<div id="right_slider"></div>
 	
 	<div id="left_indicator">0</div>
-	<div id="right_indicator"></div>
+	<div id="right_indicator">0</div>
+	
+	<div id="pos"></div>
 	
 	<script>
 		var dragging = [],
@@ -229,6 +236,8 @@
 			indicator = [];
 		dragging[0] = false;
 		dragging[1] = false;
+		
+		var pos = document.getElementById('pos');
 		
 		handle[0] = document.getElementById('left_handle');
 		slider[0] = document.getElementById('left_slider');
@@ -259,21 +268,25 @@
 				handle[0].style.marginLeft = handle[0].left - distance + "px";
 				slider[0].style.width = handle[0].style.marginLeft;
 				left_limit = parseInt(handle[0].style.marginLeft.replace(/px/,""));
-				indicator[0].innerHTML = initial_left_limit + left_limit * ratio;
+				indicator[0].innerHTML = leftPositionFunc();
+				ratio = rangeFunc() / 1200;
+				drawFrame(); 
 			} else if(dragging[1]){
 				var distance = handle[1].startX - e.clientX;
 				handle[1].style.marginRight = handle[1].right + distance + "px";
 				slider[1].style.width = handle[1].style.marginRight;
 				right_limit = parseInt(handle[1].style.marginRight.replace(/px/,""));
-				indicator[1].innerHTML = initial_right_limit - right_limit * ratio;
+				indicator[1].innerHTML = rightPositionFunc();
+				ratio = rangeFunc() / 1200;
+				drawFrame();
 			}
+			
+			pos.innerHTML = e.clientX;
 		});
 		
 		body.addEventListener('mouseup', function(){
 			dragging[0] = false;
 			dragging[1] = false;
-			
-			cloud.draw(left_limit, right_limit);
 		});
 	</script>
 </body>
