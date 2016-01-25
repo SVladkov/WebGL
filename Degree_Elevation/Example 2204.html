@@ -28,21 +28,23 @@
 	<script>
 		
 	
-		n=1;
+		globalN=0;
+		var degree = 0;
 		show = false;
 		definingCurve = true;
-		pts = [];
-	
+		segments = [];
+		
 		function BezierCurve(initialPts)
 		{
-			pts = initialPts;
-		
+			this.pts = initialPts;
+			this.n = globalN;
+			
 			var data = [];
 			
 			// координати на контролните точки за рисуване на контура
-			for (var i=0; i<n; i++)
+			for (var i=0; i<this.n; i++)
 				for (var j=0; j<3; j++)
-					data.push(pts[i].coordinates[j]);
+					data.push(this.pts[i].coordinates[j]);
 			
 			// използвани само за удобство и краткост
 			//function X(i) { return pts[i].coordinates[0]; }
@@ -74,18 +76,18 @@
 			this.buf = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-			this.n = data.length/3;
+			this.n1 = data.length/3;
 			this.color = [1,0,0];
 		}
 		
 		BezierCurve.prototype.X = function(i)
 		{ 
-			return pts[i].coordinates[0]; 
+			return this.pts[i].coordinates[0]; 
 		}
 		
 		BezierCurve.prototype.Y = function (i)
 		{ 
-			return pts[i].coordinates[1]; 
+			return this.pts[i].coordinates[1]; 
 		}
 		
 		// крива на Безие - рисуване
@@ -101,11 +103,11 @@
 				
 				// рисуване на самата крива
 				gl.vertexAttrib3fv(aColor,this.color);
-				gl.drawArrays(gl.LINE_STRIP,n,this.n-n);
+				gl.drawArrays(gl.LINE_STRIP,this.n,this.n1-this.n);
 				
 				// рисуване на контура
 				gl.vertexAttrib3fv(aColor,[0.6,0.6,1]);
-				gl.drawArrays(gl.LINE_STRIP,0,n);
+				gl.drawArrays(gl.LINE_STRIP,0,this.n);
 			popMatrix();
 		}
 		
@@ -128,7 +130,7 @@
 		
 		BezierCurve.prototype.bernstein = function(i, t)
 		{
-			return (factorial(n-1) / (factorial(n-1-i) * factorial(i))) * Math.pow(t, i) * Math.pow(1-t, n-1-i);
+			return (factorial(this.n-1) / (factorial(this.n-1-i) * factorial(i))) * Math.pow(t, i) * Math.pow(1-t, this.n-1-i);
 		}
 	
 		BezierCurve.prototype.q = function(t)
@@ -136,7 +138,7 @@
 			var x = 0, 
 				y = 0;
 			
-			for(var i=0; i<n; i++)
+			for(var i=0; i<this.n; i++)
 			{
 				var coef = this.bernstein(i, t);
 			
@@ -182,11 +184,11 @@
 		{	
 			this.coordinates = [x, y];
 		
-			this.n = 64;
+			this.n1 = 64;
 			var data = [0,0,0];
-			for (var i=0; i<=this.n; i++)
+			for (var i=0; i<=this.n1; i++)
 			{
-				var a = 2*PI*i/this.n;
+				var a = 2*PI*i/this.n1;
 				data.push(cos(a),sin(a),0);
 			}
 			var buf = gl.createBuffer();
@@ -218,9 +220,9 @@
 			gl.enableVertexAttribArray(aXYZ);
 			gl.vertexAttribPointer(aXYZ,3,gl.FLOAT,false,3*FLOATS,0*FLOATS);
 			if (this.full)
-				gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
+				gl.drawArrays(gl.TRIANGLE_FAN,0,this.n1+2);
 			else
-				gl.drawArrays(gl.LINE_STRIP,1,this.n+1);
+				gl.drawArrays(gl.LINE_STRIP,1,this.n1+1);
 			popMatrix();
 		}
 
@@ -270,6 +272,7 @@
 			return -event.clientY+gl.canvas.offsetTop+gl.canvas.offsetHeight/2;
 		}
 
+		var curve;
 		
 		function drawFrame()
 		{
@@ -280,17 +283,19 @@
 			
 			if(show){
 				var pts = [];
-				for (var i=0; i<n; i++)
+				for (var i=0; i<globalN; i++)
 				{
 					pts[i] = elem[2*i];
 				}
-				var curve = new BezierCurve(pts);
+				curve = new BezierCurve(pts);
 				curve.draw();
 				curve.free();
 			}	
 			
 			for (var i=0; i<elem.length; i++)
+			{	
 				elem[i].draw();
+			}
 			
 //			requestAnimationFrame(drawFrame);
 		}
@@ -303,35 +308,40 @@
 		{
 			// игнорираме ново натискане докато рисуваме
 			//if (draw) return;
-			if (event.button!=0 && event.button!=2) return
+			if (event.button!=0 && event.button!=2) return;
 			
 			if(definingCurve)
 			{
 				var sizeOfPoint = 5;			
 				elem.push(new Circle(getX(event),getY(event),true));
 				elem[elem.length-1].end(getX(event)+sizeOfPoint, getY(event));
-			}
 				
-			if (event.button==0)
-			{
-				if (definingCurve)
+				if (event.button==0 && definingCurve)
 				{
-					n++;
+					globalN++;
+					var a = document.getElementById("numberOfPoints");
+					console.log(a);
+					a.innerText = globalN;
 					elem.push(new Segment(getX(event),getY(event)));
+					
+					draw = true;
+				}
+				if (event.button==2 && definingCurve)
+				{				
+					globalN++;
+					var a = document.getElementById("numberOfPoints");
+					console.log(a);
+					a.innerText = globalN;
+				
+					show = true;
+					
+					requestAnimationFrame(drawFrame);
+					draw = false;
+					definingCurve = false;
+						
+					return;
 				}
 			}
-			if (event.button==2 && definingCurve)
-			{
-				show = true;
-				
-				requestAnimationFrame(drawFrame);
-				draw = false;
-				definingCurve = false;
-					
-				return;
-			}
-			
-			draw = true;
 			mouseMove(event);
 		}
 		
@@ -365,6 +375,57 @@
 			
 			requestAnimationFrame(drawFrame);
 		}
+		
+		function elevate(i)
+		{
+			segments.length++;
+		
+			if(i > 0)
+			{
+				degree += i;
+				
+				var oldPts = curve.pts;
+				//var newPts = [];
+				
+				//newPts[0] = oldPts[0];
+				
+				var newX = (1/(curve.n+1)) * oldPts[0].coordinates[0] + (1 - 1/(curve.n+1)) * oldPts[1].coordinates[0];
+				var newY = (1/(curve.n+1)) * oldPts[0].coordinates[1] + (1 - 1/(curve.n+1)) * oldPts[1].coordinates[1];
+				elem.push(new Segment(newX,newY));
+				
+				for (var i=1; i<curve.n; i++)
+				{
+					var newX = (i/(curve.n+1)) * oldPts[i-1].coordinates[0] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[0];
+					var newY = (i/(curve.n+1)) * oldPts[i-1].coordinates[1] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[1];
+					
+					if(i<curve.n-1)
+					{
+						elem[elem.length-1].end(newX, newY);
+						elem.push(new Segment(newX, newY));
+					}
+					else
+					{
+						elem[elem.length-1].end(newX, newY);
+					}	
+					//newPts.push(new Circle(newX, newY, true));
+				}
+					
+				requestAnimationFrame(drawFrame);
+					
+				//newPts.push(oldPts[curve.n-1]);
+				
+				//console.log(newPts);
+				
+				//var newCurve = new BezierCurve(newPts);
+				//newCurve.draw();
+				//newCurve.free();
+			}
+			else
+			{
+				if(degree > 0)
+				degree += i;
+			}
+		}
 	</script>
 </head>
 
@@ -378,4 +439,8 @@
 	<canvas id="picasso" width="600" height="400">
 		Искаме canvas, но няма!
 	</canvas>
+	
+	<div id="numberOfPoints"></div>
+	<button onclick="elevate(-1)">-</button>
+	<button onclick="elevate(1)">+</button>
 </body>
