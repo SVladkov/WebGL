@@ -389,12 +389,12 @@
 			
 		function elevate(i)
 		{
-			segments.length++;
-			level++;
-			segments[segments.length-1] = [];
-			
 			if(i > 0)
 			{
+				segments.length++;
+				level++;
+				segments[segments.length-1] = [];
+			
 				degree += i;
 				var oldPts = curve.pts;
 				
@@ -456,7 +456,16 @@
 			else
 			{
 				if(degree > 0)
-				degree += i;
+				{
+					//segments.length--;
+					level--;
+				
+					degree += i;
+				
+					segments.pop();
+				
+					requestAnimationFrame(drawFrame);
+				}
 			}
 		}
 	</script>
