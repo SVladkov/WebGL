@@ -150,11 +150,14 @@
 		}
 		
 		// отсечка - конструктор с начална точка
-		Segment = function(x,y)
+		Segment = function(x1,y1)
 		{			
+			this.x = x1;
+			this.y = y1;
+		
 			var buf = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x,y,0,0,0,0]), gl.DYNAMIC_DRAW);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([this.x,this.y,0,0,0,0]), gl.DYNAMIC_DRAW);
 			this.color = [0,0,0];
 			this.buf = buf;
 		}
@@ -297,6 +300,14 @@
 				elem[i].draw();
 			}
 			
+			for (var i=0; i<segments.length; i++)
+			{
+				for (var j=0; j<segments[i].length; j++)
+				{
+					segments[i][j].draw();
+				}
+			}
+			
 //			requestAnimationFrame(drawFrame);
 		}
 		
@@ -320,7 +331,6 @@
 				{
 					globalN++;
 					var a = document.getElementById("numberOfPoints");
-					console.log(a);
 					a.innerText = globalN;
 					elem.push(new Segment(getX(event),getY(event)));
 					
@@ -330,7 +340,6 @@
 				{				
 					globalN++;
 					var a = document.getElementById("numberOfPoints");
-					console.log(a);
 					a.innerText = globalN;
 				
 					show = true;
@@ -376,40 +385,64 @@
 			requestAnimationFrame(drawFrame);
 		}
 		
+		var level = 0;
+			
 		function elevate(i)
 		{
 			segments.length++;
-		
+			level++;
+			segments[segments.length-1] = [];
+			
 			if(i > 0)
 			{
 				degree += i;
-				
 				var oldPts = curve.pts;
-				//var newPts = [];
 				
-				//newPts[0] = oldPts[0];
-				
-				var newX = (1/(curve.n+1)) * oldPts[0].coordinates[0] + (1 - 1/(curve.n+1)) * oldPts[1].coordinates[0];
-				var newY = (1/(curve.n+1)) * oldPts[0].coordinates[1] + (1 - 1/(curve.n+1)) * oldPts[1].coordinates[1];
-				elem.push(new Segment(newX,newY));
-				
-				for (var i=1; i<curve.n; i++)
-				{
-					var newX = (i/(curve.n+1)) * oldPts[i-1].coordinates[0] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[0];
-					var newY = (i/(curve.n+1)) * oldPts[i-1].coordinates[1] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[1];
+				if(segments.length-1 < 1)
+				{					
+					// Q0
+					segments[level-1].push(new Segment(oldPts[0].coordinates[0], oldPts[0].coordinates[1]));
 					
-					if(i<curve.n-1)
-					{
-						elem[elem.length-1].end(newX, newY);
-						elem.push(new Segment(newX, newY));
+					for (var i=1; i<curve.n; i++)
+					{					
+						var newX = (i/(curve.n+1)) * oldPts[i-1].coordinates[0] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[0];
+						var newY = (i/(curve.n+1)) * oldPts[i-1].coordinates[1] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[1];
+						
+						segments[level-1][segments[level-1].length-1].end(newX, newY);
+						segments[level-1].push(new Segment(newX, newY));
 					}
-					else
-					{
-						elem[elem.length-1].end(newX, newY);
-					}	
-					//newPts.push(new Circle(newX, newY, true));
-				}
 					
+					// Q4
+					segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
+				}
+				else
+				{
+					oldSegments = segments[level-2];
+					console.log(oldSegments);				
+					
+					// R0
+					segments[level-1].push(new Segment(oldSegments[0].x, oldSegments[0].y));
+					
+					for (var i=1; i<oldSegments.length; i++)
+					{					
+						var newX = (i/(oldSegments.length+1)) * oldSegments[i-1].x + (1 - i/(oldSegments.length+1)) * oldSegments[i].x;
+						var newY = (i/(oldSegments.length+1)) * oldSegments[i-1].y + (1 - i/(oldSegments.length+1)) * oldSegments[i].y;
+						
+						segments[level-1][segments[level-1].length-1].end(newX, newY);
+						segments[level-1].push(new Segment(newX, newY));
+					}
+					
+					var newX = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].x + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[0];
+					var newY = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].y + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[1];
+					
+					segments[level-1][segments[level-1].length-1].end(newX, newY);
+					segments[level-1].push(new Segment(newX, newY));
+					//segments[level-1][segments[level-1].length-1].end(oldSegments[oldSegments.length-1].x, oldSegments[oldSegments.length-1].y);
+					//segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);					
+					//segments[level-1].push(new Segment(oldSegments[oldSegments.length-1].x, oldSegments[oldSegments.length-1].y));
+					segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
+				}
+				
 				requestAnimationFrame(drawFrame);
 					
 				//newPts.push(oldPts[curve.n-1]);
