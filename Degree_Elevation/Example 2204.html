@@ -2,7 +2,7 @@
 
 <head>
 	<meta charset="utf-8"/>
-	<title>Геометрично чертане</title>
+	<title>Degree elevation</title>
 
 	<script src="webgl-fmi.js"></script>
 	<script src="shaders.js"></script>
@@ -26,11 +26,9 @@
 	</style>
 	
 	<script>
-		
-	
 		globalN=0;
 		var degree = 0;
-		show = false;
+		show = true;
 		definingCurve = true;
 		segments = [];
 		
@@ -46,10 +44,6 @@
 				for (var j=0; j<3; j++)
 					data.push(this.pts[i].coordinates[j]);
 			
-			// използвани само за удобство и краткост
-			//function X(i) { return pts[i].coordinates[0]; }
-			//function Y(i) { return pts[i].coordinates[1]; }
-			
 			// обхождане на кривата
 			for (var t=0; t<1.02; t+=0.02)
 			{
@@ -59,17 +53,7 @@
 				
 				x = xy[0];
 				y = xy[1];
-				
-				/*if (n==3)
-				{
-					x = (1-t)*(1-t)*X(0) + 2*t*(1-t)*X(1) + t*t*X(2);
-					y = (1-t)*(1-t)*Y(0) + 2*t*(1-t)*Y(1) + t*t*Y(2);
-				}
-				else
-				{
-					x = (1-t)*(1-t)*(1-t)*X(0) + 3*t*(1-t)*(1-t)*X(1) + 3*t*t*(1-t)*X(2) + t*t*t*X(3);
-					y = (1-t)*(1-t)*(1-t)*Y(0) + 3*t*(1-t)*(1-t)*Y(1) + 3*t*t*(1-t)*Y(2) + t*t*t*Y(3);
-				}*/
+		
 				data.push(x,y,0);
 			}
 			
@@ -354,22 +338,6 @@
 			mouseMove(event);
 		}
 		
-		// при пускане на бутон (все едно кой)
-		/*function mouseUp(event)
-		{
-			// игнорираме пускане, ако не рисуваме
-			//if (!draw) return;
-			//if (event.button==2) draw=false;
-			if (event.button==0)
-			{
-				elem.push(new Circle(getX(event),getY(event),true));
-				elem[elem.length-1].end(getX(event)+5,getY(event));
-				requestAnimationFrame(drawFrame);
-			}
-			
-			//draw = false;
-		}*/
-		
 		// при движение на мишката
 		function mouseMove(event)
 		{
@@ -389,90 +357,99 @@
 			
 		function elevate(i)
 		{
-			if(i > 0)
+			indicator = document.getElementById("levelOfElevation");
+		
+			if(!definingCurve)
 			{
-				segments.length++;
-				level++;
-				segments[segments.length-1] = [];
-			
-				degree += i;
-				var oldPts = curve.pts;
+				if(i > 0)
+				{
+					segments.length++;
+					level++;
+					segments[segments.length-1] = [];
 				
-				if(segments.length-1 < 1)
-				{					
-					// Q0
-					segments[level-1].push(new Segment(oldPts[0].coordinates[0], oldPts[0].coordinates[1]));
+					degree += i;
+					var oldPts = curve.pts;
 					
-					for (var i=1; i<curve.n; i++)
+					if(segments.length-1 < 1)
 					{					
-						var newX = (i/(curve.n+1)) * oldPts[i-1].coordinates[0] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[0];
-						var newY = (i/(curve.n+1)) * oldPts[i-1].coordinates[1] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[1];
+						// Q0
+						segments[level-1].push(new Segment(oldPts[0].coordinates[0], oldPts[0].coordinates[1]));
 						
+						for (var i=1; i<curve.n; i++)
+						{					
+							var newX = (i/(curve.n+1)) * oldPts[i-1].coordinates[0] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[0];
+							var newY = (i/(curve.n+1)) * oldPts[i-1].coordinates[1] + (1 - i/(curve.n+1)) * oldPts[i].coordinates[1];
+							
+							segments[level-1][segments[level-1].length-1].end(newX, newY);
+							segments[level-1].push(new Segment(newX, newY));
+						}
+						
+						// Qn
+						segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
+					}
+					else
+					{
+						oldSegments = segments[level-2];			
+						
+						// Q0
+						segments[level-1].push(new Segment(oldSegments[0].x, oldSegments[0].y));
+						
+						for (var i=1; i<oldSegments.length; i++)
+						{					
+							var newX = (i/(oldSegments.length+1)) * oldSegments[i-1].x + (1 - i/(oldSegments.length+1)) * oldSegments[i].x;
+							var newY = (i/(oldSegments.length+1)) * oldSegments[i-1].y + (1 - i/(oldSegments.length+1)) * oldSegments[i].y;
+							
+							segments[level-1][segments[level-1].length-1].end(newX, newY);
+							segments[level-1].push(new Segment(newX, newY));
+						}
+						
+						var newX = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].x + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[0];
+						var newY = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].y + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[1];
+						
+						// Qn
 						segments[level-1][segments[level-1].length-1].end(newX, newY);
 						segments[level-1].push(new Segment(newX, newY));
+						// Qn+1
+						segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
 					}
 					
-					// Q4
-					segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
+					requestAnimationFrame(drawFrame);
 				}
 				else
 				{
-					oldSegments = segments[level-2];
-					console.log(oldSegments);				
+					if(degree > 0)
+					{
+						level--;
+						degree += i;
 					
-					// R0
-					segments[level-1].push(new Segment(oldSegments[0].x, oldSegments[0].y));
+						segments.pop();
 					
-					for (var i=1; i<oldSegments.length; i++)
-					{					
-						var newX = (i/(oldSegments.length+1)) * oldSegments[i-1].x + (1 - i/(oldSegments.length+1)) * oldSegments[i].x;
-						var newY = (i/(oldSegments.length+1)) * oldSegments[i-1].y + (1 - i/(oldSegments.length+1)) * oldSegments[i].y;
-						
-						segments[level-1][segments[level-1].length-1].end(newX, newY);
-						segments[level-1].push(new Segment(newX, newY));
+						requestAnimationFrame(drawFrame);
 					}
-					
-					var newX = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].x + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[0];
-					var newY = (i/(oldSegments.length+1)) * oldSegments[oldSegments.length-1].y + (1 - i/(oldSegments.length+1)) * oldPts[oldPts.length-1].coordinates[1];
-					
-					segments[level-1][segments[level-1].length-1].end(newX, newY);
-					segments[level-1].push(new Segment(newX, newY));
-					//segments[level-1][segments[level-1].length-1].end(oldSegments[oldSegments.length-1].x, oldSegments[oldSegments.length-1].y);
-					//segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);					
-					//segments[level-1].push(new Segment(oldSegments[oldSegments.length-1].x, oldSegments[oldSegments.length-1].y));
-					segments[level-1][segments[level-1].length-1].end(oldPts[oldPts.length-1].coordinates[0], oldPts[oldPts.length-1].coordinates[1]);
-				}
-				
-				requestAnimationFrame(drawFrame);
-					
-				//newPts.push(oldPts[curve.n-1]);
-				
-				//console.log(newPts);
-				
-				//var newCurve = new BezierCurve(newPts);
-				//newCurve.draw();
-				//newCurve.free();
-			}
-			else
-			{
-				if(degree > 0)
-				{
-					//segments.length--;
-					level--;
-				
-					degree += i;
-				
-					segments.pop();
-				
-					requestAnimationFrame(drawFrame);
 				}
 			}
+			indicator.innerText = level;
+		}
+		
+		function clean()
+		{
+			globalN=0;
+			var degree = 0;
+			show = true;
+			definingCurve = true;
+			segments = [];
+			level = 0;
+			elem = [];
+			document.getElementById("numberOfPoints").innerText = 0;
+			document.getElementById("levelOfElevation").innerText = 0;
+			
+			requestAnimationFrame(drawFrame);
 		}
 	</script>
 </head>
 
 <body onload="start()">
-	<h2>Геометрично чертане</h2>
+	<h2>Degree elevation</h2>
 	
 	<noscript>
 		Искаме JavaScript, но няма!
@@ -482,7 +459,15 @@
 		Искаме canvas, но няма!
 	</canvas>
 	
-	<div id="numberOfPoints"></div>
+	<div>
+		<span>Number of control points:</span>
+		<span id="numberOfPoints">0</span>
+	</div>
+	<div>
+		<span>Level of elevation:</span>
+		<span id="levelOfElevation">0</span>
+	</div>
 	<button onclick="elevate(-1)">-</button>
 	<button onclick="elevate(1)">+</button>
+	<button onclick="clean()">Clear</button>
 </body>
