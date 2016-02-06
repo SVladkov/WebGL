@@ -1737,15 +1737,13 @@ Torus.prototype.draw = function()
 
 
 
-// CanonicalGears(2*numberOfTeeth)
-CanonicalGear = function(n)
+CanonicalGear = function(n,toothSize)
 {	
-	n = 100;
-	var toothHeight = 4;
-	var reducedToothHeight = 1/2*toothHeight;
+	toothSize = 1/toothSize;
+	var reducedToothHeight = 1/2*toothSize;
 	radius = function(i)
 	{
-		return i%2/(2*toothHeight)+1;
+		return i%2/(2*toothSize)+1;
 	}
 	
 	// текущ ъгъл и ъглова разлика
@@ -1771,14 +1769,7 @@ CanonicalGear = function(n)
 
 	sideRadius = function(i)
 	{
-		//if (i%2 != 0)
-		//{
-			return 1/(2*toothHeight)+1;
-		/*}
-		else
-		{
-			return 1;
-		}*/
+		return 1/(2*toothSize)+1;
 	}
 	
 	// генериране на околните стени
@@ -1786,27 +1777,29 @@ CanonicalGear = function(n)
 	var nZ = Math.cos(Math.PI/n); // височина на нормалния вектор
 	for (var i=0; i<=n; i++)
 	{ 
+		var p = -0.3;
+
 		if(i%2 != 0)
 		{
-			var N = [Math.cos(a),Math.sin(a)]; // нормала към един отвес
-			var M = [Math.cos(a+dA),Math.sin(a+dA)]; // нормала към следващия отвес
+			var N = [Math.cos(a+p),Math.sin(a+p)]; // нормала към един отвес
+			var M = [Math.cos(a+dA+p),Math.sin(a+dA+p)]; // нормала към следващия отвес
 			data.push(sideRadius(i) * Math.cos(a), sideRadius(i) * Math.sin(a),1,N[0],N[1],0);
 			data.push(sideRadius(i) * Math.cos(a), sideRadius(i) * Math.sin(a),0,N[0],N[1],0);
-			data.push(1 * Math.cos(a+dA), 1 * Math.sin(a+dA),0,M[0],M[1],0);
-			data.push(1 * Math.cos(a+dA), 1 * Math.sin(a+dA),1,M[0],M[1],0);
-			data.push(1 * Math.cos(a+dA), 1 * Math.sin(a+dA),0,M[0],M[1],0);
+			data.push(Math.cos(a+dA), Math.sin(a+dA),0,M[0],M[1],0);
+			data.push(Math.cos(a+dA), Math.sin(a+dA),1,M[0],M[1],0);
+			data.push(Math.cos(a+dA), Math.sin(a+dA),0,M[0],M[1],0);
 			data.push(sideRadius(i) * Math.cos(a), sideRadius(i) * Math.sin(a),1,N[0],N[1],0);
 		}
 		else
 		{
-			var N = [Math.cos(a),Math.sin(a)]; // нормала към един отвес
-			var M = [Math.cos(a+dA),Math.sin(a+dA)]; // нормала към следващия отвес
-			data.push(1 * Math.cos(a), 1 * Math.sin(a),1,N[0],N[1],0);
-			data.push(1 * Math.cos(a), 1 * Math.sin(a),0,N[0],N[1],0);
+			var N = [Math.cos(a-p),Math.sin(a-p)]; // нормала към един отвес
+			var M = [Math.cos(a+dA-p),Math.sin(a+dA-p)]; // нормала към следващия отвес
+			data.push(Math.cos(a), Math.sin(a),1,N[0],N[1],0);
+			data.push(Math.cos(a), Math.sin(a),0,N[0],N[1],0);
 			data.push(sideRadius(i) * Math.cos(a+dA), sideRadius(i) * Math.sin(a+dA),0,M[0],M[1],0);
 			data.push(sideRadius(i) * Math.cos(a+dA), sideRadius(i) * Math.sin(a+dA),1,M[0],M[1],0);
 			data.push(sideRadius(i) * Math.cos(a+dA), sideRadius(i) * Math.sin(a+dA),0,M[0],M[1],0);
-			data.push(1 * Math.cos(a), 1 * Math.sin(a),1,N[0],N[1],0);
+			data.push(Math.cos(a), Math.sin(a),1,N[0],N[1],0);
 		}
 		
 		a += dA;
@@ -1846,19 +1839,21 @@ var canonicalGear = [];
 
 // цилиндър - конструктор с параметри център, размер на основата, височина и брой стени
 var CYLINDER_SIDES = 32;
-Gear = function(center,size,height)
+Gear = function(center,size,toothSize,height,numberOfTeeth)
 {
 	this.center = center;
 	this.size = size;
+	this.toothSize = toothSize;
 	this.height = height;
-	this.n = CYLINDER_SIDES;
+	this.numberOfTeeth = numberOfTeeth;
+	this.n = numberOfTeeth;
 	this.color = [1,0.75,0];
 	this.offset = undefined;
 	this.hollow = false;
 	this.rot = undefined;
 	// създаваме еднократно канонична призма
 	if (!canonicalGear[this.n])
-		canonicalGear[this.n] = new CanonicalGear(this.n);
+		canonicalGear[this.n] = new CanonicalGear(this.n, this.toothSize);
 }
 
 // цилиндър - рисуване
