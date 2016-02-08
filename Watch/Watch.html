@@ -38,9 +38,13 @@
 			// дефиниране на скелет
 			//body = new Skeleton();
 			
-			gear = new Gear([0, 0, 0], 1, 0.2, 0.1, 120);
-			gear.rot = [0, 90, 0];
+			gear = new Gear([0, 0, 0], 0.8, 0.2, 0.1, 24);
+			//gear.rot = [0, 90, 0];
 			gear.color = [0.5, 0.5, 0.5];
+			
+			gear2 = new Gear([1.35,0.1,0], 0.3, 0.2, 0.1, 12);
+			gear2.color = [0.5, 0.5, 0.5];
+			//gear2.rot = [40,0,0];
 		}
 
 		var time = now();
@@ -51,9 +55,14 @@
 			time = now();
 			gl.clear(gl.COLOR_BUFFER_BIT+gl.DEPTH_BUFFER_BIT);
 			
-			lookAt([8*cos(time/2),8*sin(time/2),1],[0,0,0],[1,0,1]);
+			//lookAt([4*cos(time/2),4*sin(time/2),4],[0,0,0],[0,0,1]);
+			lookAt([4,4,4],[0,0,0],[0,0,1]);
 			
+			gear.rot=[20*time,0,1];
 			gear.draw();
+			
+			gear2.rot=[-40*time,0,1];
+			gear2.draw();
 			
 			requestAnimationFrame(drawFrame);
 		}

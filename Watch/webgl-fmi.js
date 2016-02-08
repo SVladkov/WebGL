@@ -1739,37 +1739,39 @@ Torus.prototype.draw = function()
 
 CanonicalGear = function(n,toothSize)
 {	
-	toothSize = 1/toothSize;
-	var reducedToothHeight = 1/2*toothSize;
+	var edgeSharpness = 0;
+	//toothSize = 1/toothSize;
 	radius = function(i)
 	{
-		return i%2/(2*toothSize)+1;
+		//return i%2/(2*toothSize)+1;
+		return (i%2) * toothSize + 1;
 	}
 	
 	// текущ ъгъл и ъглова разлика
 	var a = 0, dA = 2*Math.PI/n;
 
 	// генериране на долната основа като ветрило
-	var data = [0,0,0, 0,0,-1];
+	var data = [0,0,-edgeSharpness, 0,0,-1];
+	//data.push(0.2,0,10,0,0,0);
 	for (var i=0; i<=n; i++)
 	{ 
-		data.push(radius(i) * Math.cos(a), radius(i) * Math.sin(a),0,0,0,-1);
+		data.push(radius(i) * Math.cos(a), radius(i) * Math.sin(a),0,0.1,0,-10);
 		a += dA;
 	}
 
 	a = 0, dA = 2*Math.PI/n;
 	
 	// генериране на горната основа като ветрило
-	data.push(0,0,1, 0,0,1);
+	data.push(0,0,1+edgeSharpness, 0,0,1);
 	for (var i=0; i<=n; i++)
 	{ 
-		data.push(radius(i) * Math.cos(a), radius(i) * Math.sin(a),1,0,0,1);
+		data.push(radius(i) * Math.cos(a), radius(i) * Math.sin(a),1,-0.1,0,10);
 		a += dA;
 	}
 
 	sideRadius = function(i)
 	{
-		return 1/(2*toothSize)+1;
+		return toothSize + 1;
 	}
 	
 	// генериране на околните стени
@@ -1839,11 +1841,13 @@ var canonicalGear = [];
 
 // цилиндър - конструктор с параметри център, размер на основата, височина и брой стени
 var CYLINDER_SIDES = 32;
-Gear = function(center,size,toothSize,height,numberOfTeeth)
+Gear = function(center,size,initialToothSize,height,numberOfTeeth)
 {
+	numberOfTeeth *= 2;
+	
 	this.center = center;
 	this.size = size;
-	this.toothSize = toothSize;
+	this.toothSize = initialToothSize/size;
 	this.height = height;
 	this.numberOfTeeth = numberOfTeeth;
 	this.n = numberOfTeeth;
