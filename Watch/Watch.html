@@ -19,15 +19,22 @@
 		}
 		
 		Watch = function() {
-			this.gear = new Gear([2.8, 6.2, 1.6], 4.5, 0.7, 0.5, 52);
+			this.hours = 0;
+			this.minutes = 0;
+			this.seconds = 0;
+		
+			this.gear = new Gear([2.8, 6.2, 0], 4.5, 0.7, 0.5, 52);
 			this.gear.color = [0.5, 0.5, 0.5];
 			
-			this.gear2 = new Gear([7.4,0.7,1.6], 2, 0.7, 0.5, 26);
+			this.gear2 = new Gear([7.4,0.7,0], 2, 0.7, 0.5, 26);
 			this.gear2.color = [0.5, 0.5, 0.5];
 			
 			this.tor = new Torus([0,0,0],0.1,11.8,0.9);
 			
 			this.ring = new Ring([0,0,0], 14.5, 11.8, 1.8);
+			
+			this.minutesHand = new Cylinder([0,0,1.6], 0.3, 10);
+			this.minutesHand.rot = [0,90,0];
 		}
 		
 		Watch.prototype.draw = function() {
@@ -45,7 +52,21 @@
 			
 			this.ring.draw();
 			
-			
+			this.getCurrentTime();
+			this.minutesHand.rot = [6*this.seconds,90,0];
+			this.minutesHand.draw();
+		}
+		
+		Watch.prototype.getCurrentTime = function() {
+			var totalSec = new Date().getTime() / 1000;
+			this.hours = parseInt( totalSec / 3600 ) % 24;
+			this.minutes = parseInt( totalSec / 60 ) % 60;
+			this.seconds = totalSec % 60;
+
+			var result = (this.hours < 10 ? "0" + this.hours : this.hours) + "-" + 
+						 (this.minutes < 10 ? "0" + this.minutes : this.minutes) + "-" + 
+						 (this.seconds  < 10 ? "0" + this.seconds : this.seconds);
+			console.log(result);
 		}
 		
 		function init()
@@ -76,12 +97,13 @@
 			time = now();
 			gl.clear(gl.COLOR_BUFFER_BIT+gl.DEPTH_BUFFER_BIT);
 			
-			//lookAt([2*cos(time/2),2*sin(time/2),2],[0,0,0],[0,0,1]);
-			lookAt([18,18,18],[0,0,0],[0,0,1]);
+			//lookAt([12*cos(time/2),12*sin(time/2),12],[0,0,0],[0,0,1]);
+			lookAt([12,12,12],[0,0,0],[0,0,1]);
 				
 			pushMatrix();
 			
-			xRotate(90);
+			zRotate(-110);
+			//yRotate(40);
 			
 			watch.draw();
 			
