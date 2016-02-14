@@ -1629,7 +1629,7 @@ RotationalSolid.prototype.draw = function()
 
 
 var TORUS_MAJOR_SIDES = 50;
-var TORUS_MINOR_SIDES = 25;
+var TORUS_MINOR_SIDES = 4;
 
 // тор - конструктор
 Torus = function(center,size,R,r)
@@ -1646,6 +1646,10 @@ Torus = function(center,size,R,r)
 	// пресмята нормален вектор във връх с ъгъл a и височина z
 	function normal(a,b)
 	{
+		console.log(a + " " + b);
+		a = a%4;
+		b = b%4;
+		
 		var u = [-Math.cos(a)*Math.sin(b),-Math.sin(b)*Math.sin(a),Math.cos(b)];
 		var v = [-Math.sin(a),Math.cos(a),0];
 		return unitVector(vectorProduct(v,u));
@@ -1667,8 +1671,8 @@ Torus = function(center,size,R,r)
 	// генериране на ленти (по b)
 	for (var bi=0; bi<TORUS_MINOR_SIDES; bi++)
 	{
-		var b1 = bi*dB;
-		var b2 = (bi+1)*dB;
+		var b1 = bi*dB+Math.PI/4;
+		var b2 = (bi+1)*dB+Math.PI/4;
 		
 		// генериране на лента (по a)
 		for (var ai=0; ai<=TORUS_MAJOR_SIDES; ai++)
@@ -1689,7 +1693,7 @@ Torus = function(center,size,R,r)
 	this.buf = buf;
 	this.center = center;
 	this.size = size;
-	this.color = [0.5,0.75,1];
+	this.color = [0.5,0.5,0.5];
 	this.offset = undefined;
 	this.rot = undefined;
 }
@@ -1727,6 +1731,135 @@ Torus.prototype.draw = function()
 }
 
 
+
+
+
+
+
+
+
+CanonicalRing = function(n, innerRadius)
+{	
+	// текущ ъгъл и ъглова разлика
+	var a = 0, dA = 2*Math.PI/n;
+
+	// генериране на долната основа като ветрило
+	var data = [];
+	//data = [0,0,0, 0,0,-1];
+	for (var i=0; i<=n; i++)
+	{ 
+		data.push(innerRadius*Math.cos(a),innerRadius*Math.sin(a),0,0,0,-1);
+		data.push(Math.cos(a),Math.sin(a),0,0,0,-1);
+		a += dA;
+	}
+
+	// генериране на горната основа като ветрило
+	//data.push(0,0,1, 0,0,1);
+	for (var i=0; i<=n; i++)
+	{ 
+		data.push(innerRadius*Math.cos(a),innerRadius*Math.sin(a),1,0,0,1)
+		data.push(Math.cos(a),Math.sin(a),1,0,0,1);
+		a += dA;
+	}
+
+	// генериране на околните стени
+	a = 0;
+	var nZ = Math.cos(Math.PI/n); // височина на нормалния вектор
+	for (var i=0; i<=n; i++)
+	{ 
+		var N = [Math.cos(a),Math.sin(a)]; // нормала към един отвес
+		var M = [Math.cos(a+dA),Math.sin(a+dA)]; // нормала към следващия отвес
+		data.push(Math.cos(a),Math.sin(a),1,N[0],N[1],0);
+		data.push(Math.cos(a),Math.sin(a),0,N[0],N[1],0);
+		data.push(Math.cos(a+dA),Math.sin(a+dA),0,M[0],M[1],0);
+		data.push(Math.cos(a+dA),Math.sin(a+dA),1,M[0],M[1],0);
+		data.push(Math.cos(a+dA),Math.sin(a+dA),0,M[0],M[1],0);
+		data.push(Math.cos(a),Math.sin(a),1,N[0],N[1],0);
+		a += dA;
+	}
+	
+	for (var i=0; i<=n; i++)
+	{ 
+		var N = [-Math.cos(a),-Math.sin(a)]; // нормала към един отвес
+		var M = [-Math.cos(a+dA),-Math.sin(a+dA)]; // нормала към следващия отвес
+		data.push(innerRadius*Math.cos(a),innerRadius*Math.sin(a),1,N[0],N[1],0);
+		data.push(innerRadius*Math.cos(a),innerRadius*Math.sin(a),0,N[0],N[1],0);
+		data.push(innerRadius*Math.cos(a+dA),innerRadius*Math.sin(a+dA),0,M[0],M[1],0);
+		data.push(innerRadius*Math.cos(a+dA),innerRadius*Math.sin(a+dA),1,M[0],M[1],0);
+		data.push(innerRadius*Math.cos(a+dA),innerRadius*Math.sin(a+dA),0,M[0],M[1],0);
+		data.push(innerRadius*Math.cos(a),innerRadius*Math.sin(a),1,N[0],N[1],0);
+		a += dA;
+	}
+	
+	var buf = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+	
+	// запомняме n и буфера
+	this.n = n;
+	this.buf = buf;
+}
+
+// каноничен цилиндър - метод за рисуване
+CanonicalRing.prototype.draw = function(hollow)
+{	
+	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
+	// върхове
+	gl.enableVertexAttribArray(aXYZ);
+	gl.vertexAttribPointer(aXYZ,3,gl.FLOAT,false,6*FLOATS,0*FLOATS);
+	// нормали
+	gl.enableVertexAttribArray(aNormal);
+	gl.vertexAttribPointer(aNormal,3,gl.FLOAT,false,6*FLOATS,3*FLOATS);
+	// рисуваме долната и горната основа
+	if (!hollow)
+	{
+		gl.drawArrays(gl.TRIANGLE_STRIP,0,this.n*2+2);
+		gl.drawArrays(gl.TRIANGLE_STRIP,this.n*2+2,this.n*2+2);
+	}
+	// рисуваме околните стени
+	gl.drawArrays(gl.TRIANGLES,4*this.n+4,6*this.n);
+	gl.drawArrays(gl.TRIANGLES,10*this.n+4,6*this.n+6);
+}
+
+// масив от канонични цилиндри
+var canonicalRing = [];
+
+// цилиндър - конструктор с параметри център, размер на основата, височина и брой стени
+var CYLINDER_SIDES = 32;
+Ring = function(center,size,initialInnerRadius,height)
+{
+	this.center = center;
+	this.size = size;
+	this.innerRadius = initialInnerRadius/size;
+	this.height = height;
+	this.n = CYLINDER_SIDES;
+	this.color = [1,0.75,0];
+	this.offset = undefined;
+	this.hollow = false;
+	this.rot = undefined;
+	// създаваме еднократно канонична призма
+	if (!canonicalRing[this.n])
+		canonicalRing[this.n] = new CanonicalRing(this.n,this.innerRadius);
+}
+
+// цилиндър - рисуване
+Ring.prototype.draw = function()
+{
+	pushMatrix();
+	gl.vertexAttrib3fv(aColor,this.color);
+	translate(this.center);
+	if (this.rot)
+	{
+		if (this.rot[0]) zRotate(this.rot[0]);	// хоризонтален ъгъл
+		if (this.rot[1]) xRotate(this.rot[1]);	// вертикален ъгъл
+		if (this.rot[2]) zRotate(this.rot[2]);	// осев ъгъл
+	}
+	scale([this.size,this.size,this.height]);
+	if (this.offset) translate(this.offset); // и отместването
+	useMatrix();
+	canonicalRing[this.n].draw(this.hollow);
+	popMatrix();
+}
 
 
 
