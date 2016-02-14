@@ -18,6 +18,21 @@
 			drawFrame();
 		}
 		
+		Pendulum = function() {
+			this.rot = [];
+		
+			this.ring = new Ring([-6.1,-1.2,0], 5, 4, 0.5);
+			this.cube = new Cuboid([-6.1,-1.2,0.25], [9,1,0.5]);
+		}
+		
+		Pendulum.prototype.draw = function() {
+			this.ring.rot = this.rot;
+			this.ring.draw();
+			
+			this.cube.rot = this.rot;
+			this.cube.draw();
+		}
+		
 		Watch = function() {
 			this.hours = 0;
 			this.minutes = 0;
@@ -32,15 +47,33 @@
 			this.tor = new Torus([0,0,0],0.1,11.8,0.9);
 			
 			this.ring = new Ring([0,0,0], 14.5, 11.8, 1.8);
+			this.ring.color = [0.6,0.6,0.6];
 			
-			this.secondsHand = new Cylinder([0,0,1.6], 0.3, 10);
+			this.dial = new Cylinder([0,0,1.75], 14.5, 0.1);
+			this.dial.color = [0.5,0.5,0.5];
+			
+			this.handsCenter = new Cylinder([0,0,1.8], 0.7, 0.75);
+			
+			this.secondsHand = new Cylinder([0,0,2.4], 0.1, 10);
 			this.secondsHand.rot = [0,90,0];
 			
-			this.minutesHand = new Cylinder([0,0,1.6], 0.3, 10);
+			this.minutesHand = new Cylinder([0,0,2.3], 0.2, 10);
 			this.minutesHand.rot = [0,90,0];
 			
-			this.hoursHand = new Cylinder([0,0,1.6], 0.3, 8);
+			this.hoursHand = new Cylinder([0,0,2.1], 0.2, 8);
 			this.hoursHand.rot = [0,90,0];
+			
+			this.twelveMark = new Cylinder([0,13,1.3],0.7,1);
+			
+			this.marks = [];
+			for(var i=0; i<12; i++){
+				this.marks[i] = new Cylinder([13*cos(i * Math.PI/6),13*sin(i * Math.PI/6),1.3], 0.3, 1);
+			}
+			
+			this.pendulum = new Pendulum();
+			
+			this.crown = new Gear([14.5,0,0.7], 1.5, 0.3, 1.5, 40);
+			this.crown.rot = [90,90,0];
 		}
 		
 		Watch.prototype.draw = function() {
@@ -48,10 +81,10 @@
 			var scaleche = 1/3;
 			scale([scaleche, scaleche, scaleche]);
 			//useMatrix();
-			this.gear.rot=[30*time,0,1];
+			this.gear.rot=[3*time,0,1];
 			this.gear.draw();
 			
-			this.gear2.rot=[-60*time,0,1];
+			this.gear2.rot=[-6*time,0,1];
 			this.gear2.draw();
 			
 			//tor.draw();
@@ -60,14 +93,29 @@
 			
 			this.getCurrentTime();
 			
+			//this.dial.draw();
+			
+			this.handsCenter.draw();
+			
 			this.secondsHand.rot = [6*this.seconds,90,0];
 			this.secondsHand.draw();
 			
-			this.minutesHand.rot = [6*this.minutes,90,0];
+			this.minutesHand.rot = [6*this.minutes + this.seconds/10,90,0];
 			this.minutesHand.draw();
 			
-			this.hoursHand.rot = [30*(this.hours-12),90,0];
+			this.hoursHand.rot = [30*(this.hours-12) + this.minutes/2,90,0];
 			this.hoursHand.draw();
+			
+			this.twelveMark.draw();
+			
+			for(var i=0; i<12; i++){
+				this.marks[i].draw();
+			}
+		
+			this.pendulum.rot = [65*sin(25*time), 0, 0];
+			this.pendulum.draw();
+			
+			this.crown.draw();
 		}
 		
 		Watch.prototype.getCurrentTime = function() {
@@ -79,7 +127,7 @@
 			var result = (this.hours < 10 ? "0" + this.hours : this.hours) + "-" + 
 						 (this.minutes < 10 ? "0" + this.minutes : this.minutes) + "-" + 
 						 (this.seconds  < 10 ? "0" + this.seconds : this.seconds);
-			console.log(result);
+			//console.log(result);
 		}
 		
 		function init()
@@ -110,12 +158,13 @@
 			time = now();
 			gl.clear(gl.COLOR_BUFFER_BIT+gl.DEPTH_BUFFER_BIT);
 			
-			//lookAt([12*cos(time/2),12*sin(time/2),12],[0,0,0],[0,0,1]);
-			lookAt([12,12,12],[0,0,0],[0,0,1]);
+			lookAt([18*cos(time/3),18*sin(time/3),7],[0,0,0],[0,0,2]);
+			//lookAt([12,12,12],[0,0,0],[0,0,1]);
 				
 			pushMatrix();
 			
-			zRotate(-110);
+			xRotate(60);
+			zRotate(180);
 			//yRotate(40);
 			
 			watch.draw();

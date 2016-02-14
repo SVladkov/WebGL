@@ -1101,7 +1101,7 @@ CanonicalCylinder = function(n)
 }
 
 // каноничен цилиндър - метод за рисуване
-CanonicalCylinder.prototype.draw = function(hollow)
+CanonicalCylinder.prototype.draw = function(hollow, texture, texMatrixBase)
 {	
 	gl.bindBuffer(gl.ARRAY_BUFFER,this.buf);
 	// върхове
@@ -1113,6 +1113,8 @@ CanonicalCylinder.prototype.draw = function(hollow)
 	// рисуваме долната и горната основа
 	if (!hollow)
 	{
+		//gl.uniformMatrix3fv(uTexMatrix, false, texMatrixBase);
+		
 		gl.drawArrays(gl.TRIANGLE_FAN,0,this.n+2);
 		gl.drawArrays(gl.TRIANGLE_FAN,this.n+2,this.n+2);
 	}
