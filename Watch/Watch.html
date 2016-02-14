@@ -33,8 +33,14 @@
 			
 			this.ring = new Ring([0,0,0], 14.5, 11.8, 1.8);
 			
+			this.secondsHand = new Cylinder([0,0,1.6], 0.3, 10);
+			this.secondsHand.rot = [0,90,0];
+			
 			this.minutesHand = new Cylinder([0,0,1.6], 0.3, 10);
 			this.minutesHand.rot = [0,90,0];
+			
+			this.hoursHand = new Cylinder([0,0,1.6], 0.3, 8);
+			this.hoursHand.rot = [0,90,0];
 		}
 		
 		Watch.prototype.draw = function() {
@@ -53,13 +59,20 @@
 			this.ring.draw();
 			
 			this.getCurrentTime();
-			this.minutesHand.rot = [6*this.seconds,90,0];
+			
+			this.secondsHand.rot = [6*this.seconds,90,0];
+			this.secondsHand.draw();
+			
+			this.minutesHand.rot = [6*this.minutes,90,0];
 			this.minutesHand.draw();
+			
+			this.hoursHand.rot = [30*(this.hours-12),90,0];
+			this.hoursHand.draw();
 		}
 		
 		Watch.prototype.getCurrentTime = function() {
 			var totalSec = new Date().getTime() / 1000;
-			this.hours = parseInt( totalSec / 3600 ) % 24;
+			this.hours = parseInt( totalSec / 3600 ) % 24 + 2;
 			this.minutes = parseInt( totalSec / 60 ) % 60;
 			this.seconds = totalSec % 60;
 
